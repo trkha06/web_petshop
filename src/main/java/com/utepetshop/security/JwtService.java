@@ -3,6 +3,7 @@ package com.utepetshop.security;
 import com.utepetshop.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import java.security.SecureRandom;
 import java.time.*;
 import java.util.*;
 import javax.crypto.SecretKey;
@@ -17,7 +18,13 @@ public class JwtService {
   public JwtService(
       @Value("${app.jwt.secret}") String secret,
       @Value("${app.jwt.expiration-minutes}") long minutes) {
-    this.key = Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
+    byte[] keyBytes = new byte[32];
+    if (secret == null || secret.isBlank()) {
+      new SecureRandom().nextBytes(keyBytes);
+    } else {
+      keyBytes = Base64.getDecoder().decode(secret);
+    }
+    this.key = Keys.hmacShaKeyFor(keyBytes);
     this.minutes = minutes;
   }
 
