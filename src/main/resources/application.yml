@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: utepet-shop
+  datasource:
+    url: jdbc:h2:mem:utepet;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  thymeleaf:
+    cache: false
+server:
+  error:
+    include-message: always
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: 120
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Giỏ hàng')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5">
+      <h1 class="h3 fw-bold mb-4">Giỏ hàng</h1>
+      <div
+        class="alert alert-success"
+        th:if="${success}"
+        th:text="${success}"
+      ></div>
+      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+      <div class="panel p-3" th:if="${!cart.items.empty}">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Chi nhánh</th>
+              <th>Giá</th>
+              <th>SL</th>
+              <th>Tạm tính</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="i:${cart.items}">
+              <td><strong th:text="${i.product.name}"></strong></td>
+              <td th:text="${i.branch.name}"></td>
+              <td
+                th:text="${#numbers.formatDecimal(i.product.price,0,'COMMA',0,'POINT')}+' đ'"
+              ></td>
+              <td>
+                <form
+                  class="d-flex gap-1"
+                  th:action="@{/cart/items/{id}/quantity(id=${i.id})}"
+                  method="post"
+                >
+                  <input
+                    class="form-control form-control-sm"
+                    style="width: 70px"
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    th:value="${i.quantity}"
+                  /><button class="btn btn-sm btn-outline-success">Sửa</button>
+                </form>
+              </td>
+              <td
+                th:text="${#numbers.formatDecimal(i.product.price*i.quantity,0,'COMMA',0,'POINT')}+' đ'"
+              ></td>
+              <td>
+                <form
+                  th:action="@{/cart/items/{id}/remove(id=${i.id})}"
+                  method="post"
+                >
+                  <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="text-end">
+          <a class="btn btn-primary" th:href="@{/checkout}"
+            >Tiến hành checkout</a
+          >
+        </div>
+      </div>
+      <div class="panel p-5 text-center" th:if="${cart.items.empty}">
+        <div class="fs-1">🛒</div>
+        <h2 class="h5">Giỏ hàng đang trống</h2>
+        <a th:href="@{/products}" class="btn btn-outline-success"
+          >Khám phá sản phẩm</a
+        >
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Đăng ký')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5" style="max-width: 520px">
+      <div class="panel p-4">
+        <h1 class="h3 fw-bold">Tạo tài khoản</h1>
+        <p class="text-muted">Tài khoản mới mặc định là CUSTOMER.</p>
+        <div
+          class="alert alert-danger"
+          th:if="${error}"
+          th:text="${error}"
+        ></div>
+        <form method="post" th:action="@{/register}">
+          <label class="form-label">Họ và tên</label
+          ><input class="form-control mb-3" name="fullName" required /><label
+            class="form-label"
+            >Email</label
+          ><input
+            class="form-control mb-3"
+            name="email"
+            type="email"
+            required
+          /><label class="form-label">Mật khẩu</label
+          ><input
+            class="form-control mb-4"
+            name="password"
+            type="password"
+            minlength="8"
+            required
+          /><button class="btn btn-primary w-100">Đăng ký</button>
+        </form>
+      </div>
+    </main>
+  </body>
+</html>

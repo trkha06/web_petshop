@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Lưu sản phẩm')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5" style="max-width: 820px">
+      <h1
+        class="h3 fw-bold mb-4"
+        th:text="${product==null?'Thêm sản phẩm':'Sửa sản phẩm'}"
+      ></h1>
+      <form class="panel p-4" method="post" th:action="@{/manager/products}">
+        <input type="hidden" name="id" th:value="${product?.id}" />
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">SKU</label
+            ><input
+              class="form-control"
+              name="sku"
+              required
+              th:value="${product?.sku}"
+            />
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Tên sản phẩm</label
+            ><input
+              class="form-control"
+              name="name"
+              required
+              th:value="${product?.name}"
+            />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Mô tả</label
+            ><textarea
+              class="form-control"
+              name="description"
+              rows="3"
+              th:text="${product?.description}"
+            ></textarea>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Giá</label
+            ><input
+              class="form-control"
+              type="number"
+              min="0"
+              name="price"
+              required
+              th:value="${product?.price}"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Danh mục</label
+            ><select class="form-select" name="categoryId">
+              <option
+                th:each="c:${categories}"
+                th:value="${c.id}"
+                th:text="${c.name}"
+                th:selected="${product?.category?.id==c.id}"
+              ></option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Thương hiệu</label
+            ><select class="form-select" name="brandId">
+              <option
+                th:each="b:${brands}"
+                th:value="${b.id}"
+                th:text="${b.name}"
+                th:selected="${product?.brand?.id==b.id}"
+              ></option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Loại thú cưng</label
+            ><select class="form-select" name="petType">
+              <option
+                th:each="t:${petTypes}"
+                th:value="${t}"
+                th:text="${t}"
+                th:selected="${product?.petType==t}"
+              ></option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">URL ảnh đại diện</label
+            ><input
+              class="form-control"
+              type="url"
+              name="imageUrl"
+              th:value="${product?.imageUrl}"
+            />
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+          <button class="btn btn-primary">Lưu sản phẩm</button
+          ><a class="btn btn-light" th:href="@{/manager/products}">Hủy</a>
+        </div>
+      </form>
+    </main>
+  </body>
+</html>

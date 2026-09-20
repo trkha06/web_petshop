@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Quản lý tồn kho')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5">
+      <h1 class="h3 fw-bold mb-4">Tồn kho đa chi nhánh</h1>
+      <div
+        class="alert alert-success"
+        th:if="${success}"
+        th:text="${success}"
+      ></div>
+      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+      <div class="panel p-3 table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>Chi nhánh</th>
+              <th>Tồn kho</th>
+              <th>Ngưỡng thấp</th>
+              <th>Điều chỉnh</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              th:each="i:${inventories}"
+              th:classappend="${i.quantity<=i.lowStockThreshold}?'table-warning'"
+            >
+              <td th:text="${i.product.name}"></td>
+              <td th:text="${i.branch.name}"></td>
+              <td><strong th:text="${i.quantity}"></strong></td>
+              <td th:text="${i.lowStockThreshold}"></td>
+              <td>
+                <form
+                  class="d-flex gap-2"
+                  th:action="@{/manager/inventory/{id}/adjust(id=${i.id})}"
+                  method="post"
+                >
+                  <input
+                    class="form-control form-control-sm"
+                    style="width: 90px"
+                    name="delta"
+                    type="number"
+                    placeholder="+/-"
+                  /><input
+                    class="form-control form-control-sm"
+                    name="note"
+                    required
+                    placeholder="Ghi chú"
+                  /><button class="btn btn-sm btn-primary">Lưu</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

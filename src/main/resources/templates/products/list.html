@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Cửa hàng')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-4">
+      <section class="hero p-4 p-md-5 mb-4">
+        <div class="row align-items-center">
+          <div class="col-md-7">
+            <span class="badge pill mb-2">Dành cho mọi người bạn nhỏ</span>
+            <h1 class="display-6 fw-bold">Chọn điều tốt nhất cho thú cưng.</h1>
+            <p class="lead mb-0">
+              Sản phẩm rõ nguồn gốc, tồn kho theo từng chi nhánh và đặt hàng
+              minh bạch.
+            </p>
+          </div>
+          <div class="col-md-5 text-center fs-1 d-none d-md-block">🐶 🐱</div>
+        </div>
+      </section>
+      <div class="row g-4">
+        <aside class="col-lg-3">
+          <form class="filter-card p-3" method="get">
+            <h5 class="mb-3">Tìm sản phẩm</h5>
+            <input
+              class="form-control mb-3"
+              name="q"
+              th:value="${q}"
+              placeholder="Tên sản phẩm..."
+            /><select class="form-select mb-2" name="category">
+              <option value="">Tất cả danh mục</option>
+              <option
+                th:each="c:${categories}"
+                th:value="${c.id}"
+                th:text="${c.name}"
+                th:selected="${selectedCategory==c.id}"
+              ></option></select
+            ><select class="form-select mb-2" name="brand">
+              <option value="">Tất cả thương hiệu</option>
+              <option
+                th:each="b:${brands}"
+                th:value="${b.id}"
+                th:text="${b.name}"
+                th:selected="${selectedBrand==b.id}"
+              ></option></select
+            ><select class="form-select mb-2" name="petType">
+              <option value="">Mọi thú cưng</option>
+              <option
+                value="DOG"
+                th:selected="${selectedPetType?.name()=='DOG'}"
+              >
+                Chó
+              </option>
+              <option
+                value="CAT"
+                th:selected="${selectedPetType?.name()=='CAT'}"
+              >
+                Mèo
+              </option>
+              <option
+                value="OTHER"
+                th:selected="${selectedPetType?.name()=='OTHER'}"
+              >
+                Khác
+              </option></select
+            ><select class="form-select mb-3" name="sort">
+              <option value="newest">Mới nhất</option>
+              <option value="priceAsc" th:selected="${sort=='priceAsc'}">
+                Giá tăng dần
+              </option>
+              <option value="priceDesc" th:selected="${sort=='priceDesc'}">
+                Giá giảm dần
+              </option></select
+            ><button class="btn btn-primary w-100">Áp dụng</button>
+          </form>
+        </aside>
+        <section class="col-lg-9">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="h4 mb-0">
+              Sản phẩm
+              <span
+                class="text-muted small"
+                th:text="'(' + ${products.totalElements} + ')'"
+                >(0)</span
+              >
+            </h2>
+          </div>
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-4">
+            <div class="col" th:each="p:${products.content}">
+              <article class="card product-card h-100">
+                <img th:src="${p.imageUrl}" th:alt="${p.name}" />
+                <div class="card-body d-flex flex-column">
+                  <span
+                    class="badge pill align-self-start mb-2"
+                    th:text="${p.petType}"
+                    >DOG</span
+                  >
+                  <h3 class="h6 fw-bold" th:text="${p.name}">Tên</h3>
+                  <p class="text-muted small" th:text="${p.brand.name}">
+                    Brand
+                  </p>
+                  <div
+                    class="mt-auto d-flex justify-content-between align-items-center"
+                  >
+                    <span
+                      class="price"
+                      th:text="${#numbers.formatDecimal(p.price,0,'COMMA',0,'POINT')} + ' đ'"
+                      >0 đ</span
+                    ><a
+                      class="btn btn-outline-success btn-sm"
+                      th:href="@{/products/{id}(id=${p.id})}"
+                      >Xem</a
+                    >
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+          <p class="text-center text-muted mt-4" th:if="${products.empty}">
+            Chưa có sản phẩm phù hợp.
+          </p>
+          <nav class="mt-4" th:if="${products.totalPages>1}">
+            <ul class="pagination justify-content-center">
+              <li
+                class="page-item"
+                th:classappend="${products.first}?'disabled'"
+              >
+                <a
+                  class="page-link"
+                  th:href="@{/products(page=${products.number-1},q=${q},category=${selectedCategory},brand=${selectedBrand},petType=${selectedPetType},sort=${sort})}"
+                  >Trước</a
+                >
+              </li>
+              <li class="page-item disabled">
+                <span
+                  class="page-link"
+                  th:text="${products.number+1}+' / '+${products.totalPages}"
+                ></span>
+              </li>
+              <li
+                class="page-item"
+                th:classappend="${products.last}?'disabled'"
+              >
+                <a
+                  class="page-link"
+                  th:href="@{/products(page=${products.number+1},q=${q},category=${selectedCategory},brand=${selectedBrand},petType=${selectedPetType},sort=${sort})}"
+                  >Sau</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </section>
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

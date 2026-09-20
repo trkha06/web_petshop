@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Checkout')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5" style="max-width: 720px">
+      <h1 class="h3 fw-bold mb-4">Xác nhận đơn hàng</h1>
+      <div class="panel p-4">
+        <form method="post" th:action="@{/checkout}">
+          <h2 class="h6">Phương thức nhận hàng</h2>
+          <select class="form-select mb-4" name="deliveryType">
+            <option value="DELIVERY">Giao tận nơi</option>
+            <option value="PICKUP_AT_STORE">Nhận tại cửa hàng</option>
+          </select>
+          <h2 class="h6">Thanh toán</h2>
+          <select class="form-select mb-4" name="paymentMethod">
+            <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+            <option value="ONLINE_PAYMENT">
+              Thanh toán online (sẵn sàng mở rộng)
+            </option>
+          </select>
+          <p class="small text-muted">
+            Tồn kho sẽ được khoá và kiểm tra lại ngay khi đặt hàng để tránh bán
+            vượt số lượng.
+          </p>
+          <button class="btn btn-primary w-100">Đặt hàng</button>
+        </form>
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

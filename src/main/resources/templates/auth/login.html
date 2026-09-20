@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Đăng nhập')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5" style="max-width: 520px">
+      <div class="panel p-4">
+        <h1 class="h3 fw-bold">Chào mừng trở lại</h1>
+        <p class="text-muted">Đăng nhập để lưu giỏ hàng và theo dõi đơn.</p>
+        <div class="alert alert-danger" th:if="${param.error}">
+          Email hoặc mật khẩu chưa đúng.
+        </div>
+        <div class="alert alert-success" th:if="${param.logout}">
+          Bạn đã đăng xuất.
+        </div>
+        <form th:action="@{/login}" method="post">
+          <label class="form-label">Email</label
+          ><input
+            class="form-control mb-3"
+            type="email"
+            name="username"
+            required
+            autofocus
+          /><label class="form-label">Mật khẩu</label
+          ><input
+            class="form-control mb-4"
+            type="password"
+            name="password"
+            required
+          /><button class="btn btn-primary w-100">Đăng nhập</button>
+        </form>
+        <hr />
+        <p class="small mb-0">
+          Tài khoản demo: <code>customer@utepet.vn</code> /
+          <code>Password@123</code>
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

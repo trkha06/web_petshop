@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Quản lý')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 class="h3 fw-bold mb-1">Trung tâm quản lý</h1>
+          <p class="text-muted mb-0">
+            Catalog, kho đa chi nhánh và vận hành thương mại.
+          </p>
+        </div>
+        <span class="badge pill p-2">MANAGER / ADMIN</span>
+      </div>
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <a class="text-decoration-none" th:href="@{/manager/products}"
+            ><div class="panel p-4">
+              <div class="text-muted small">Sản phẩm</div>
+              <div class="display-6 fw-bold" th:text="${products.size()}">
+                0
+              </div>
+            </div></a
+          >
+        </div>
+        <div class="col-md-4">
+          <a class="text-decoration-none" th:href="@{/manager/inventory}"
+            ><div class="panel p-4">
+              <div class="text-muted small">Chi nhánh</div>
+              <div class="display-6 fw-bold" th:text="${branches.size()}">
+                0
+              </div>
+            </div></a
+          >
+        </div>
+        <div class="col-md-4">
+          <div class="panel p-4">
+            <div class="text-muted small">Bảo mật</div>
+            <div class="fw-bold mt-2">RBAC + JWT</div>
+            <div class="small text-muted">API admin được bảo vệ</div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Staff - đơn hàng')}"></head>
+  <body>
+    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <main class="container py-5">
+      <h1 class="h3 fw-bold mb-4">Xử lý đơn hàng</h1>
+      <div
+        class="alert alert-success"
+        th:if="${success}"
+        th:text="${success}"
+      ></div>
+      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+      <div class="panel p-3 table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách</th>
+              <th>Chi nhánh</th>
+              <th>Tổng tiền</th>
+              <th>Trạng thái</th>
+              <th>Cập nhật</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="o:${orders}">
+              <td th:text="'#'+${o.id}"></td>
+              <td th:text="${o.customer.fullName}"></td>
+              <td th:text="${o.branch.name}"></td>
+              <td
+                th:text="${#numbers.formatDecimal(o.totalAmount,0,'COMMA',0,'POINT')}+' đ'"
+              ></td>
+              <td>
+                <span
+                  class="badge text-bg-secondary"
+                  th:text="${o.status}"
+                ></span>
+              </td>
+              <td>
+                <form
+                  class="d-flex gap-2"
+                  th:action="@{/staff/orders/{id}(id=${o.id})}"
+                  method="post"
+                >
+                  <select name="status" class="form-select form-select-sm">
+                    <option
+                      th:each="s:${statuses}"
+                      th:value="${s}"
+                      th:text="${s}"
+                      th:selected="${s==o.status}"
+                    ></option></select
+                  ><button class="btn btn-sm btn-primary">Lưu</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p th:if="${orders.empty}" class="text-center text-muted mb-0">
+          Chưa có đơn cần xử lý.
+        </p>
+      </div>
+    </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>
