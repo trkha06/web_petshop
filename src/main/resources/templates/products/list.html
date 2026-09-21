@@ -79,7 +79,7 @@
               Sản phẩm
               <span
                 class="text-muted small"
-                th:text="'(' + ${products.totalElements} + ')'"
+                th:text="|(${products.totalElements})|"
                 >(0)</span
               >
             </h2>
@@ -133,7 +133,7 @@
               <li class="page-item disabled">
                 <span
                   class="page-link"
-                  th:text="${products.number+1}+' / '+${products.totalPages}"
+                  th:text="|${products.number + 1} / ${products.totalPages}|"
                 ></span>
               </li>
               <li

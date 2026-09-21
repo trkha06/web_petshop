@@ -39,16 +39,16 @@
                     type="radio"
                     name="branchId"
                     th:value="${s.branch.id}"
-                    th:id="'branch'+${s.id}"
+                    th:id="|branch${s.id}|"
                     th:checked="${iter.first}"
                     required
                   /><label
                     class="form-check-label w-100"
-                    th:for="'branch'+${s.id}"
+                    th:for="|branch${s.id}|"
                     ><span th:text="${s.branch.name}">Chi nhánh</span
                     ><span
                       class="float-end text-success"
-                      th:text="'Còn '+${s.quantity}"
+                      th:text="|Còn ${s.quantity}|"
                     ></span
                   ></label>
                 </div>

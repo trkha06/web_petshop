@@ -10,6 +10,7 @@ import com.utepetshop.service.CurrentUser;
 import com.utepetshop.service.PetCareServiceCatalog;
 import com.utepetshop.service.PetService;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -34,14 +35,22 @@ public class BookingWebController {
     model.addAttribute("services", serviceCatalog.getAllActiveServices());
     model.addAttribute("branches", branchRepository.findAll());
     model.addAttribute("selectedServiceId", serviceId);
-    model.addAttribute("bookingRequest", new BookingCreateRequest());
+    BookingCreateRequest request = new BookingCreateRequest();
+    request.setServiceId(serviceId);
+    model.addAttribute("bookingRequest", request);
     return "bookings/create";
   }
 
   @PostMapping("/create")
   public String handleCreate(
-      @ModelAttribute BookingCreateRequest request,
+      @Valid @ModelAttribute("bookingRequest") BookingCreateRequest request,
+      org.springframework.validation.BindingResult bindingResult,
       RedirectAttributes ra) {
+    if (bindingResult.hasErrors()) {
+      ra.addFlashAttribute(
+          "error", bindingResult.getAllErrors().getFirst().getDefaultMessage());
+      return "redirect:/bookings/create?serviceId=" + request.getServiceId();
+    }
     try {
       User user = currentUser.required();
       BookingResponse booking = bookingService.createBooking(request, user);

@@ -54,7 +54,7 @@
                 </div>
                 <div class="col-sm-6">
                   <div class="text-muted small">Ngày & Giờ hẹn:</div>
-                  <strong><span th:text="${#temporals.format(booking.slotDate, 'dd/MM/yyyy')}"></span> | <span th:text="${booking.startTime} + ' - ' + ${booking.endTime}"></span></strong>
+                  <strong><span th:text="${#temporals.format(booking.slotDate, 'dd/MM/yyyy')}"></span> | <span th:text="|${booking.startTime} - ${booking.endTime}|"></span></strong>
                 </div>
                 <div class="col-sm-6">
                   <div class="text-muted small">Tổng chi phí (Snapshot giá):</div>

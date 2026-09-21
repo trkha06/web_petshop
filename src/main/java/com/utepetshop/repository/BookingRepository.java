@@ -32,6 +32,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
   boolean existsByUserIdAndServiceIdAndStatus(Long userId, Long serviceId, BookingStatus status);
 
+  boolean existsByUserIdAndSlotIdAndStatusNot(Long userId, Long slotId, BookingStatus status);
+
   // Analytics queries
   @Query(
       "SELECT COALESCE(SUM(b.totalPrice), 0) FROM Booking b WHERE b.status = com.utepetshop.entity.BookingStatus.COMPLETED AND b.createdAt >= :since")

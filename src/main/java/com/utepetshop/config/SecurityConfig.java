@@ -9,8 +9,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.*;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 @Configuration
 public class SecurityConfig {
@@ -21,12 +24,18 @@ public class SecurityConfig {
 
   @Bean
   SecurityFilterChain chain(HttpSecurity http, JwtAuthFilter jwt) throws Exception {
+    AccessDeniedHandlerImpl denied = new AccessDeniedHandlerImpl();
+    denied.setErrorPage("/access-denied");
     return http.csrf(c -> c.ignoringRequestMatchers("/api/**"))
         .exceptionHandling(
             e ->
                 e.defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                    new AntPathRequestMatcher("/api/**")))
+                    new AntPathRequestMatcher("/api/**"))
+                    .defaultAuthenticationEntryPointFor(
+                        new LoginUrlAuthenticationEntryPoint("/login"),
+                        new NegatedRequestMatcher(new AntPathRequestMatcher("/api/**")))
+                    .accessDeniedHandler(denied))
         .authorizeHttpRequests(
             a ->
                 a.requestMatchers(
@@ -52,7 +61,9 @@ public class SecurityConfig {
                     .authenticated()
                     .anyRequest()
                     .authenticated())
-        .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/products", true).permitAll())
+        // Do not force the default URL: SavedRequest keeps an anonymous customer on the
+        // booking/order page they originally requested after a successful login.
+        .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/products").permitAll())
         .logout(l -> l.logoutSuccessUrl("/products"))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)

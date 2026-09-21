@@ -55,7 +55,7 @@
 
               <div class="bg-light p-2 rounded-2 small mb-3">
                 <div>📍 <span th:text="${b.branchName}"></span></div>
-                <div>🕒 <span th:text="${#temporals.format(b.slotDate, 'dd/MM/yyyy')}"></span> (<span th:text="${b.startTime} + ' - ' + ${b.endTime}"></span>)</div>
+                <div>🕒 <span th:text="${#temporals.format(b.slotDate, 'dd/MM/yyyy')}"></span> (<span th:text="|${b.startTime} - ${b.endTime}|"></span>)</div>
                 <div>💰 <strong class="text-danger" th:text="${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></strong></div>
               </div>
 

@@ -50,6 +50,22 @@ public class SlotManagementService {
    */
   @Transactional
   public int generateSlots(SlotGenerateRequest req) {
+    if (req.getStartDate() == null
+        || req.getEndDate() == null
+        || req.getStartDate().isBefore(LocalDate.now())) {
+      throw new BusinessException("Ngày tạo slot phải từ hôm nay trở đi!");
+    }
+    if (req.getEndDate().isBefore(req.getStartDate())) {
+      throw new BusinessException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu!");
+    }
+    if (req.getStartTime() == null
+        || req.getEndTime() == null
+        || !req.getEndTime().isAfter(req.getStartTime())) {
+      throw new BusinessException("Khung giờ slot không hợp lệ!");
+    }
+    if (req.getCapacity() <= 0 || req.getIntervalMinutes() < 15) {
+      throw new BusinessException("Sức chứa và khoảng cách slot không hợp lệ!");
+    }
     Branch branch =
         branchRepository
             .findById(req.getBranchId())

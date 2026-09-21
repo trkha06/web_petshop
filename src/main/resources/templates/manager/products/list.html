@@ -34,7 +34,7 @@
                 <strong th:text="${p.name}"></strong>
                 <div
                   class="small text-muted"
-                  th:text="${p.category.name}+' · '+${p.brand.name}"
+                  th:text="|${p.category.name} · ${p.brand.name}|"
                 ></div>
               </td>
               <td

@@ -25,7 +25,7 @@
             </div>
 
             <div class="card-body p-4 p-md-5">
-              <form th:action="@{/bookings/create}" method="post" id="bookingForm">
+              <form th:action="@{/bookings/create}" th:object="${bookingRequest}" method="post" id="bookingForm">
                 
                 <!-- BƯỚC 1: Chọn Thú Cưng -->
                 <div class="mb-4">
@@ -36,30 +36,29 @@
                   <div th:if="${pets.empty}" class="alert alert-warning">
                     Bạn chưa có hồ sơ thú cưng nào. Vui lòng <a th:href="@{/pets/new}" class="fw-bold">thêm bé cưng</a> trước khi đặt lịch!
                   </div>
-                  <select th:unless="${pets.empty}" class="form-select form-select-lg" name="petId" id="petSelect" required>
+                  <select th:unless="${pets.empty}" class="form-select form-select-lg" th:field="*{petId}" id="petSelect" required>
                     <option value="">-- Chọn thú cưng --</option>
-                    <option th:each="p : ${pets}" th:value="${p.id}" th:text="${p.name} + ' (' + ${p.petType} + ' - ' + ${p.breed != null ? p.breed : 'Thuần chủng'} + ')'"></option>
+                    <option th:each="p : ${pets}" th:value="${p.id}" th:text="|${p.name} (${p.petType} - ${p.breed != null ? p.breed : 'Thuần chủng'})|"></option>
                   </select>
                 </div>
 
                 <!-- BƯỚC 2: Chọn Dịch Vụ Chăm Sóc -->
                 <div class="mb-4">
                   <label class="form-label fw-bold">2. Chọn gói dịch vụ <span class="text-danger">*</span></label>
-                  <select class="form-select form-select-lg" name="serviceId" id="serviceSelect" required onchange="loadAvailableSlots()">
+                  <select class="form-select form-select-lg" th:field="*{serviceId}" id="serviceSelect" required onchange="loadAvailableSlots()">
                     <option value="">-- Chọn dịch vụ --</option>
                     <option th:each="s : ${services}" 
                             th:value="${s.id}" 
-                            th:selected="${selectedServiceId != null and selectedServiceId == s.id}"
-                            th:text="${s.name} + ' (' + #numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT') + 'đ - ' + ${s.durationMinutes} + ' phút)'"></option>
+                            th:text="|${s.name} (${#numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT')}đ - ${s.durationMinutes} phút)|"></option>
                   </select>
                 </div>
 
                 <!-- BƯỚC 3: Chọn Chi Nhánh -->
                 <div class="mb-4">
                   <label class="form-label fw-bold">3. Chọn chi nhánh <span class="text-danger">*</span></label>
-                  <select class="form-select form-select-lg" name="branchId" id="branchSelect" required onchange="loadAvailableSlots()">
+                  <select class="form-select form-select-lg" th:field="*{branchId}" id="branchSelect" required onchange="loadAvailableSlots()">
                     <option value="">-- Chọn chi nhánh tiếp nhận --</option>
-                    <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name} + ' (' + ${b.address} + ')'"></option>
+                    <option th:each="b : ${branches}" th:value="${b.id}" th:text="|${b.name} (${b.address})|"></option>
                   </select>
                 </div>
 
@@ -80,13 +79,13 @@
                   </div>
                   <div id="slots-container" class="row g-2 d-none"></div>
                   <!-- Hidden input chứa slot được chọn -->
-                  <input type="hidden" name="slotId" id="selectedSlotId" required>
+                  <input type="hidden" th:field="*{slotId}" id="selectedSlotId" required>
                 </div>
 
                 <!-- BƯỚC 6: Ghi Chú Thêm -->
                 <div class="mb-4">
                   <label class="form-label fw-bold">6. Ghi chú cho nhân viên (Tùy chọn)</label>
-                  <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Bé nhát người lạ, cần cắt móng nhẹ tay..."></textarea>
+                  <textarea class="form-control" th:field="*{note}" rows="2" placeholder="Ví dụ: Bé nhát người lạ, cần cắt móng nhẹ tay..."></textarea>
                 </div>
 
                 <div class="d-grid pt-3">

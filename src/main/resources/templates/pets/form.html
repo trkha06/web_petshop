@@ -22,7 +22,7 @@
             </div>
 
             <div class="card-body p-4">
-              <form th:action="${isEdit} ? @{'/pets/' + ${petId} + '/edit'} : @{/pets/new}" method="post">
+              <form th:action="${isEdit} ? @{/pets/{id}/edit(id=${petId})} : @{/pets/new}" method="post">
                 <div class="mb-3">
                   <label class="form-label fw-semibold">Tên thú cưng <span class="text-danger">*</span></label>
                   <input type="text" class="form-control" name="name" th:value="${pet.name}" required placeholder="Ví dụ: Milo, Bánh Bao, Miu Miu">

@@ -19,7 +19,7 @@
             </thead>
             <tbody>
               <tr th:each="o:${orders}">
-                <td th:text="'#'+${o.id}"></td>
+                <td th:text="|#${o.id}|"></td>
                 <td th:text="${o.branch.name}"></td>
                 <td>
                   <span

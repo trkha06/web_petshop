@@ -8,6 +8,7 @@ import com.utepetshop.exception.BusinessException;
 import com.utepetshop.exception.SlotFullException;
 import com.utepetshop.repository.*;
 import com.utepetshop.service.event.BookingStatusChangedEvent;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -79,6 +80,13 @@ public class BookingService {
     }
     if (!slot.isActive()) {
       throw new BusinessException("Khung giờ hẹn này đã bị đóng!");
+    }
+    if (slot.getSlotDate().isBefore(LocalDate.now())) {
+      throw new BusinessException("Không thể đặt lịch vào ngày trong quá khứ!");
+    }
+    if (bookingRepository.existsByUserIdAndSlotIdAndStatusNot(
+        user.getId(), slot.getId(), BookingStatus.CANCELLED)) {
+      throw new BusinessException("Bạn đã có lịch hẹn đang hiệu lực trong khung giờ này!");
     }
 
     // 4. Kiểm tra nếu slot.getBookedCount() >= slot.getCapacity() thì ném SlotFullException
@@ -180,6 +188,16 @@ public class BookingService {
                 .orElseThrow(() -> new BusinessException("Không tìm thấy slot"));
         slot.setBookedCount(Math.max(0, slot.getBookedCount() - 1));
         slotRepository.save(slot);
+      }
+    } else {
+      java.util.Map<BookingStatus, java.util.Set<BookingStatus>> allowed =
+          java.util.Map.of(
+              BookingStatus.PENDING, java.util.Set.of(BookingStatus.CONFIRMED),
+              BookingStatus.CONFIRMED, java.util.Set.of(BookingStatus.CHECKED_IN),
+              BookingStatus.CHECKED_IN, java.util.Set.of(BookingStatus.IN_PROGRESS),
+              BookingStatus.IN_PROGRESS, java.util.Set.of(BookingStatus.COMPLETED));
+      if (!allowed.getOrDefault(oldStatus, java.util.Set.of()).contains(newStatus)) {
+        throw new BusinessException("Không thể chuyển trạng thái lịch hẹn theo cách này!");
       }
     }
 

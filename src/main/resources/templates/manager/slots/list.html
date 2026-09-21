@@ -66,12 +66,12 @@
               </tr>
               <tr th:each="s : ${slots}">
                 <td class="fw-semibold text-primary" th:text="${s.serviceName}"></td>
-                <td><strong th:text="${s.startTime} + ' - ' + ${s.endTime}"></strong></td>
+                <td><strong th:text="|${s.startTime} - ${s.endTime}|"></strong></td>
                 <td class="text-center" th:text="${s.capacity}"></td>
                 <td class="text-center" th:text="${s.bookedCount}"></td>
                 <td class="text-center">
                   <span th:class="'badge ' + (${s.available > 0} ? 'bg-success' : 'bg-danger')" 
-                        th:text="${s.available > 0} ? 'Còn ' + ${s.available} + ' chỗ' : 'Hết chỗ'"></span>
+                        th:text="${s.available > 0 ? 'Còn ' + s.available + ' chỗ' : 'Hết chỗ'}"></span>
                 </td>
                 <td>
                   <span th:class="'badge ' + (${s.active} ? 'bg-info text-dark' : 'bg-secondary')"
@@ -106,7 +106,7 @@
                 <label class="form-label fw-semibold">Dịch vụ áp dụng <span class="text-danger">*</span></label>
                 <select name="serviceId" class="form-select" required>
                   <option value="">-- Chọn dịch vụ --</option>
-                  <option th:each="s : ${services}" th:value="${s.id}" th:text="${s.name} + ' (' + ${s.durationMinutes} + ' phút)'"></option>
+                  <option th:each="s : ${services}" th:value="${s.id}" th:text="|${s.name} (${s.durationMinutes} phút)|"></option>
                 </select>
               </div>
 

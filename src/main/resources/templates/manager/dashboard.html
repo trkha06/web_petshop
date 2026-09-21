@@ -42,7 +42,7 @@
         <div class="col-sm-6 col-xl-3">
           <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-warning border-4">
             <div class="text-muted small fw-semibold">BOOKING CHỜ XỬ LÝ</div>
-            <div class="fs-4 fw-bold text-warning mt-1" th:text="${data.pendingBookingsCount} + ' / ' + ${data.totalBookings}"></div>
+            <div class="fs-4 fw-bold text-warning mt-1" th:text="|${data.pendingBookingsCount} / ${data.totalBookings}|"></div>
             <div class="small text-muted mt-1">Lịch hẹn trạng thái PENDING</div>
           </div>
         </div>

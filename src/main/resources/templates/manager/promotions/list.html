@@ -58,7 +58,7 @@
                   <span th:unless="${p.maxDiscountAmount}" class="text-muted">Không giới hạn</span>
                 </td>
                 <td>
-                  <span th:text="${p.usedCount} + ' / ' + ${p.usageLimit}"></span>
+                  <span th:text="|${p.usedCount} / ${p.usageLimit}|"></span>
                 </td>
                 <td>
                   <span th:class="'badge ' + (${p.active} ? 'bg-success' : 'bg-secondary')"

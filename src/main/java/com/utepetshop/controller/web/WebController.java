@@ -102,6 +102,12 @@ public class WebController {
     return "auth/login";
   }
 
+  @GetMapping("/access-denied")
+  @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.FORBIDDEN)
+  String accessDenied() {
+    return "error/403";
+  }
+
   @GetMapping("/cart")
   String cart(Model m) {
     m.addAttribute(
@@ -192,10 +198,13 @@ public class WebController {
 
   @GetMapping("/orders/{id}")
   String orderDetail(@PathVariable Long id, Model m) {
-    CustomerOrder o = orders.findById(id).orElseThrow();
-    if (!o.getCustomer().getId().equals(current.required().getId()))
-      throw new org.springframework.security.access.AccessDeniedException(
-          "Không có quyền xem đơn này");
+    CustomerOrder o =
+        orders
+            .findByIdAndCustomerId(id, current.required().getId())
+            .orElseThrow(
+                () ->
+                    new org.springframework.security.access.AccessDeniedException(
+                        "Bạn không có quyền xem đơn hàng này"));
     m.addAttribute("order", o);
     return "orders/detail";
   }

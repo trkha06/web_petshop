@@ -64,7 +64,7 @@
                 <td class="small" th:text="${b.branchName}"></td>
                 <td>
                   <div class="small fw-semibold" th:text="${#temporals.format(b.slotDate, 'dd/MM/yyyy')}"></div>
-                  <div class="small text-muted" th:text="${b.startTime} + ' - ' + ${b.endTime}"></div>
+                  <div class="small text-muted" th:text="|${b.startTime} - ${b.endTime}|"></div>
                 </td>
                 <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
                 <td>
@@ -79,32 +79,32 @@
                 <td class="text-end">
                   <div class="d-inline-flex gap-1" th:if="${b.status.name() != 'COMPLETED' and b.status.name() != 'CANCELLED'}">
                     <!-- Nút Xác nhận nếu PENDING -->
-                    <form th:if="${b.status.name() == 'PENDING'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                    <form th:if="${b.status.name() == 'PENDING'}" th:action="@{/staff/bookings/{id}/status(id=${b.id})}" method="post">
                       <input type="hidden" name="status" value="CONFIRMED">
                       <button type="submit" class="btn btn-sm btn-info text-white">Xác nhận</button>
                     </form>
 
                     <!-- Nút Check-in nếu CONFIRMED -->
-                    <form th:if="${b.status.name() == 'CONFIRMED'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                    <form th:if="${b.status.name() == 'CONFIRMED'}" th:action="@{/staff/bookings/{id}/status(id=${b.id})}" method="post">
                       <input type="hidden" name="status" value="CHECKED_IN">
                       <button type="submit" class="btn btn-sm btn-primary">Check-in</button>
                     </form>
 
                     <!-- Nút Đang làm nếu CHECKED_IN -->
-                    <form th:if="${b.status.name() == 'CHECKED_IN'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                    <form th:if="${b.status.name() == 'CHECKED_IN'}" th:action="@{/staff/bookings/{id}/status(id=${b.id})}" method="post">
                       <input type="hidden" name="status" value="IN_PROGRESS">
                       <button type="submit" class="btn btn-sm btn-secondary">Đang làm</button>
                     </form>
 
                     <!-- Nút Hoàn thành nếu IN_PROGRESS -->
-                    <form th:if="${b.status.name() == 'IN_PROGRESS'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                    <form th:if="${b.status.name() == 'IN_PROGRESS'}" th:action="@{/staff/bookings/{id}/status(id=${b.id})}" method="post">
                       <input type="hidden" name="status" value="COMPLETED">
                       <button type="submit" class="btn btn-sm btn-success">Hoàn thành</button>
                     </form>
 
                     <!-- Nút Hủy nếu PENDING hoặc CONFIRMED -->
                     <form th:if="${b.status.name() == 'PENDING' or b.status.name() == 'CONFIRMED'}" 
-                          th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post"
+                          th:action="@{/staff/bookings/{id}/status(id=${b.id})}" method="post"
                           onsubmit="return confirm('Bạn có chắc muốn hủy lịch này?');">
                       <input type="hidden" name="status" value="CANCELLED">
                       <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>

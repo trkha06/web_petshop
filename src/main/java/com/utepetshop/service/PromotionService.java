@@ -123,6 +123,26 @@ public class PromotionService {
 
   @Transactional
   public PromotionDto createPromotion(PromotionDto dto) {
+    if (dto.getCode() == null || dto.getCode().isBlank()) {
+      throw new BusinessException("Mã khuyến mãi không được để trống!");
+    }
+    if (dto.getDiscountType() == null
+        || dto.getDiscountValue() == null
+        || dto.getDiscountValue().signum() <= 0) {
+      throw new BusinessException("Loại và giá trị giảm giá không hợp lệ!");
+    }
+    if (dto.getDiscountType() == DiscountType.PERCENTAGE
+        && dto.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
+      throw new BusinessException("Giảm giá phần trăm không được vượt quá 100%!");
+    }
+    if (dto.getStartDate() != null
+        && dto.getEndDate() != null
+        && !dto.getStartDate().isBefore(dto.getEndDate())) {
+      throw new BusinessException("Ngày kết thúc phải sau ngày bắt đầu!");
+    }
+    if (dto.getUsageLimit() <= 0) {
+      throw new BusinessException("Giới hạn sử dụng phải lớn hơn 0!");
+    }
     if (promotionRepository.findByCode(dto.getCode().trim().toUpperCase()).isPresent()) {
       throw new BusinessException("Mã khuyến mãi này đã tồn tại!");
     }

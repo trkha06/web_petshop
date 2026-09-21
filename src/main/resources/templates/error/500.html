@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Có lỗi xảy ra')}"></head>
+  <body class="bg-light">
+    <div th:replace="~{fragments/navbar :: nav}"></div>
+    <main class="container py-5 text-center"><div class="card border-0 shadow-sm rounded-4 p-5"><div class="display-5 text-danger">500</div><h1 class="h4 mt-3">Có lỗi xảy ra</h1><p class="text-muted" th:text="${message}">Hệ thống chưa thể xử lý yêu cầu này.</p><a th:href="@{/products}" class="btn btn-primary">Về cửa hàng</a></div></main>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>
