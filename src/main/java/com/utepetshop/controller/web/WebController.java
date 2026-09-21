@@ -212,10 +212,8 @@ public class WebController {
   }
 
   @GetMapping("/manager")
-  String manager(Model m) {
-    m.addAttribute("products", products.findAll());
-    m.addAttribute("branches", branches.findAll());
-    return "manager/dashboard";
+  String manager() {
+    return "redirect:/manager/dashboard";
   }
 
   @GetMapping("/staff/orders")

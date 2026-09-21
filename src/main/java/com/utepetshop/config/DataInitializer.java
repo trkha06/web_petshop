@@ -20,6 +20,11 @@ public class DataInitializer {
       ProductRepository products,
       BranchRepository branches,
       InventoryRepository inventories,
+      PetRepository petRepo,
+      ServiceRepository serviceRepo,
+      ServiceSlotRepository slotRepo,
+      StaffProfileRepository staffProfileRepo,
+      PromotionRepository promoRepo,
       PasswordEncoder encoder) {
     return args -> {
       if (users.count() > 0) return;
@@ -70,6 +75,122 @@ public class DataInitializer {
       for (Product p : List.of(p1, p2, p3)) {
         inventories.save(new Inventory(p, q1, 24));
         inventories.save(new Inventory(p, td, 10));
+      }
+
+      // Seed Phần 2: Services, Pet, StaffProfile, Slots, Promotion
+      User customer = users.findByEmail("customer@utepet.vn").orElseThrow();
+      User staff = users.findByEmail("staff@utepet.vn").orElseThrow();
+
+      // Gán Staff vào chi nhánh UTE Pet Thủ Đức
+      StaffProfile staffProfile = new StaffProfile(staff, td);
+
+      // Tạo Pet "Milo"
+      Pet milo = new Pet();
+      milo.setUser(customer);
+      milo.setName("Milo");
+      milo.setPetType(PetType.DOG);
+      milo.setBreed("Poodle");
+      milo.setGender("Đực");
+      milo.setBirthday(java.time.LocalDate.now().minusYears(2));
+      milo.setWeight(new BigDecimal("4.5"));
+      milo.setImageUrl("https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?auto=format&fit=crop&w=800&q=80");
+      milo.setNote("Bé thân thiện, thích được vuốt ve");
+      milo.setActive(true);
+
+      // Tạo Services: Spa Basic, Grooming, Pet Hotel
+      com.utepetshop.entity.Service s1 = new com.utepetshop.entity.Service();
+      s1.setName("Spa Basic");
+      s1.setDescription("Tắm thảo mộc khử mùi, vệ sinh tai, cắt mài móng, vắt tuyến hôi và sấy tạo kiểu lông bồng bềnh.");
+      s1.setPrice(new BigDecimal("150000"));
+      s1.setDurationMinutes(60);
+      s1.setPetType(PetType.DOG);
+      s1.setImageUrl("https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80");
+      s1.setActive(true);
+
+      com.utepetshop.entity.Service s2 = new com.utepetshop.entity.Service();
+      s2.setName("Grooming & Cắt Tỉa Tạo Kiểu");
+      s2.setDescription("Gói tạo kiểu chuyên sâu bởi thợ cắt tỉa nhiều năm kinh nghiệm, tạo form đầu tròn, phong cách gấu bông.");
+      s2.setPrice(new BigDecimal("280000"));
+      s2.setDurationMinutes(90);
+      s2.setPetType(PetType.DOG);
+      s2.setImageUrl("https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=800&q=80");
+      s2.setActive(true);
+
+      com.utepetshop.entity.Service s3 = new com.utepetshop.entity.Service();
+      s3.setName("Khách Sạn Thú Cưng (Pet Hotel)");
+      s3.setDescription("Phòng điều hòa 24/7, camera giám sát riêng từng phòng, chế độ ăn theo yêu cầu và vui chơi mỗi ngày.");
+      s3.setPrice(new BigDecimal("200000"));
+      s3.setDurationMinutes(120);
+      s3.setPetType(PetType.OTHER);
+      s3.setImageUrl("https://images.unsplash.com/photo-1601758228041-f3b2795255f1?auto=format&fit=crop&w=800&q=80");
+      s3.setActive(true);
+
+      // Tạo Khuyến Mãi (Promotions)
+      Promotion promo1 = new Promotion();
+      promo1.setCode("CHAOMUNG");
+      promo1.setDiscountType(DiscountType.PERCENTAGE);
+      promo1.setDiscountValue(new BigDecimal("10")); // 10%
+      promo1.setMinOrderValue(new BigDecimal("100000"));
+      promo1.setMaxDiscountAmount(new BigDecimal("50000"));
+      promo1.setUsageLimit(50);
+      promo1.setActive(true);
+
+      Promotion promo2 = new Promotion();
+      promo2.setCode("PETVIP50K");
+      promo2.setDiscountType(DiscountType.FIXED_AMOUNT);
+      promo2.setDiscountValue(new BigDecimal("50000"));
+      promo2.setMinOrderValue(new BigDecimal("200000"));
+      promo2.setUsageLimit(100);
+      promo2.setActive(true);
+
+      // Lưu Part 2 data
+      petRepo.save(milo);
+      staffProfileRepo.save(staffProfile);
+      serviceRepo.saveAll(List.of(s1, s2, s3));
+      promoRepo.saveAll(List.of(promo1, promo2));
+
+      // Tạo slot Demo cho ngày hôm nay và ngày mai tại UTE Pet Thủ Đức
+      java.time.LocalDate today = java.time.LocalDate.now();
+      java.time.LocalDate tomorrow = today.plusDays(1);
+
+      for (java.time.LocalDate date : List.of(today, tomorrow)) {
+        // Slot 14:00 chính xác theo kịch bản Demo O4: Còn 1 chỗ (capacity = 1, bookedCount = 0)
+        slotRepo.save(
+            new ServiceSlot(
+                td,
+                s1,
+                date,
+                java.time.LocalTime.of(14, 0),
+                java.time.LocalTime.of(15, 0),
+                1));
+
+        // Thêm các khung giờ khác
+        slotRepo.save(
+            new ServiceSlot(
+                td,
+                s1,
+                date,
+                java.time.LocalTime.of(9, 0),
+                java.time.LocalTime.of(10, 0),
+                2));
+
+        slotRepo.save(
+            new ServiceSlot(
+                td,
+                s2,
+                date,
+                java.time.LocalTime.of(10, 30),
+                java.time.LocalTime.of(12, 0),
+                2));
+
+        slotRepo.save(
+            new ServiceSlot(
+                q1,
+                s1,
+                date,
+                java.time.LocalTime.of(14, 0),
+                java.time.LocalTime.of(15, 0),
+                3));
       }
     };
   }

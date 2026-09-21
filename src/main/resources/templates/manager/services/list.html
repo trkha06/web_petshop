@@ -1,0 +1,126 @@
+// File: src/main/resources/templates/manager/services/list.html
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Quản lý Dịch vụ')}"></head>
+  <body class="bg-light">
+    <div th:replace="~{fragments/navbar :: nav}"></div>
+
+    <div class="container my-4">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="fw-bold mb-1">✨ Quản Lý Gói Dịch Vụ Thú Cưng</h3>
+          <p class="text-muted mb-0">Thiết lập danh mục dịch vụ, bảng giá và thời gian chăm sóc</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+          + Thêm Gói Dịch Vụ Mới
+        </button>
+      </div>
+
+      <!-- Flash Messages -->
+      <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Ảnh</th>
+                <th>Tên dịch vụ</th>
+                <th>Dành cho</th>
+                <th>Thời lượng</th>
+                <th>Giá dịch vụ</th>
+                <th>Trạng thái</th>
+                <th class="text-end">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="s : ${services}">
+                <td>
+                  <img th:src="${s.imageUrl != null ? s.imageUrl : 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=150&q=80'}" 
+                       class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;">
+                </td>
+                <td>
+                  <div class="fw-bold" th:text="${s.name}"></div>
+                  <small class="text-muted" th:text="${#strings.abbreviate(s.description, 60)}"></small>
+                </td>
+                <td><span class="badge bg-secondary" th:text="${s.petType != null ? s.petType : 'Tất cả'}"></span></td>
+                <td th:text="${s.durationMinutes} + ' phút'"></td>
+                <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                <td>
+                  <span th:class="'badge ' + (${s.active} ? 'bg-success' : 'bg-secondary')" 
+                        th:text="${s.active} ? 'Đang mở' : 'Đang tạm dừng'"></span>
+                </td>
+                <td class="text-end">
+                  <form th:action="@{'/manager/services/' + ${s.id} + '/toggle'}" method="post" class="d-inline">
+                    <button type="submit" th:class="'btn btn-sm ' + (${s.active} ? 'btn-outline-warning' : 'btn-outline-success')"
+                            th:text="${s.active} ? 'Tạm ngưng' : 'Mở lại'"></button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Thêm Dịch Vụ Mới -->
+    <div class="modal fade" id="addServiceModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form th:action="@{/manager/services}" method="post">
+            <div class="modal-header">
+              <h5 class="modal-title fw-bold">Thêm Gói Dịch Vụ Mới</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Tên dịch vụ <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="name" required placeholder="Ví dụ: Spa Chăm Sóc Toàn Diện">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Mô tả dịch vụ</label>
+                <textarea class="form-control" name="description" rows="3" placeholder="Chi tiết các bước thực hiện..."></textarea>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Giá niêm yết (VNĐ) <span class="text-danger">*</span></label>
+                  <input type="number" class="form-control" name="price" required placeholder="Ví dụ: 150000">
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Thời lượng (phút)</label>
+                  <input type="number" class="form-control" name="durationMinutes" value="60" min="15">
+                </div>
+              </div>
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Loài áp dụng</label>
+                  <select class="form-select" name="petType">
+                    <option value="">Tất cả loài</option>
+                    <option th:each="t : ${petTypes}" th:value="${t}" th:text="${t}"></option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">URL Ảnh minh họa</label>
+                  <input type="url" class="form-control" name="imageUrl" placeholder="https://...">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="submit" class="btn btn-primary fw-bold">Thêm Dịch Vụ</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

@@ -1,0 +1,157 @@
+// File: src/main/resources/templates/manager/slots/list.html
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Quản lý Khung giờ Slot')}"></head>
+  <body class="bg-light">
+    <div th:replace="~{fragments/navbar :: nav}"></div>
+
+    <div class="container my-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="fw-bold mb-1">⏰ Quản Lý Khung Giờ & Chỗ Trống (Slots)</h3>
+          <p class="text-muted mb-0">Thiết lập số lượng chỗ phục vụ (capacity) và sinh khung giờ hàng loạt</p>
+        </div>
+        <button class="btn btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#generateModal">
+          ⚡ Tự Động Sinh Slot Hàng Loạt
+        </button>
+      </div>
+
+      <!-- Flash Messages -->
+      <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      <!-- Bộ lọc Chi nhánh và Ngày -->
+      <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
+        <form th:action="@{/manager/slots}" method="get" class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Chọn chi nhánh</label>
+            <select name="branchId" class="form-select" required>
+              <option value="">-- Chọn chi nhánh xem slot --</option>
+              <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}" th:selected="${selectedBranchId == b.id}"></option>
+            </select>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Chọn ngày xem</label>
+            <input type="date" name="date" class="form-control" th:value="${selectedDate}">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 fw-semibold">Xem danh sách</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Bảng danh sách Slot -->
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden" th:if="${slots}">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Dịch vụ</th>
+                <th>Khung giờ</th>
+                <th class="text-center">Sức chứa (Capacity)</th>
+                <th class="text-center">Đã đặt (Booked)</th>
+                <th class="text-center">Còn lại (Available)</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${slots.empty}">
+                <td colspan="6" class="text-center py-4 text-muted">Chưa có slot nào được tạo cho ngày này tại chi nhánh đã chọn</td>
+              </tr>
+              <tr th:each="s : ${slots}">
+                <td class="fw-semibold text-primary" th:text="${s.serviceName}"></td>
+                <td><strong th:text="${s.startTime} + ' - ' + ${s.endTime}"></strong></td>
+                <td class="text-center" th:text="${s.capacity}"></td>
+                <td class="text-center" th:text="${s.bookedCount}"></td>
+                <td class="text-center">
+                  <span th:class="'badge ' + (${s.available > 0} ? 'bg-success' : 'bg-danger')" 
+                        th:text="${s.available > 0} ? 'Còn ' + ${s.available} + ' chỗ' : 'Hết chỗ'"></span>
+                </td>
+                <td>
+                  <span th:class="'badge ' + (${s.active} ? 'bg-info text-dark' : 'bg-secondary')"
+                        th:text="${s.active} ? 'Đang mở' : 'Đã khóa'"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Tự Động Sinh Slot Hàng Loạt -->
+    <div class="modal fade" id="generateModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form th:action="@{/manager/slots/generate}" method="post">
+            <div class="modal-header">
+              <h5 class="modal-title fw-bold">⚡ Tự Động Sinh Slot Hàng Loạt</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Chi nhánh áp dụng <span class="text-danger">*</span></label>
+                <select name="branchId" class="form-select" required>
+                  <option value="">-- Chọn chi nhánh --</option>
+                  <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}"></option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Dịch vụ áp dụng <span class="text-danger">*</span></label>
+                <select name="serviceId" class="form-select" required>
+                  <option value="">-- Chọn dịch vụ --</option>
+                  <option th:each="s : ${services}" th:value="${s.id}" th:text="${s.name} + ' (' + ${s.durationMinutes} + ' phút)'"></option>
+                </select>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Từ ngày <span class="text-danger">*</span></label>
+                  <input type="date" name="startDate" class="form-control" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Đến ngày <span class="text-danger">*</span></label>
+                  <input type="date" name="endDate" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Giờ bắt đầu <span class="text-danger">*</span></label>
+                  <input type="time" name="startTime" value="08:00" class="form-control" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Giờ kết thúc <span class="text-danger">*</span></label>
+                  <input type="time" name="endTime" value="18:00" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Số chỗ mỗi slot (Capacity) <span class="text-danger">*</span></label>
+                  <input type="number" name="capacity" value="2" min="1" class="form-control" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold">Khoảng cách slot (phút)</label>
+                  <input type="number" name="intervalMinutes" value="60" min="15" class="form-control">
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+              <button type="submit" class="btn btn-primary fw-bold">Khởi Tạo Hàng Loạt</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

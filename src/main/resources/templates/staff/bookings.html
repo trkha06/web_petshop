@@ -1,0 +1,124 @@
+// File: src/main/resources/templates/staff/bookings.html
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Staff - Xử lý Booking')}"></head>
+  <body class="bg-light">
+    <div th:replace="~{fragments/navbar :: nav}"></div>
+
+    <div class="container-fluid px-4 my-4">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="fw-bold mb-1">📋 Quản Lý & Tiếp Nhận Booking Chi Nhánh</h3>
+          <p class="text-muted mb-0">Xử lý tiến độ chăm sóc thú cưng: Xác nhận → Check-in → Đang thực hiện → Hoàn thành</p>
+        </div>
+        <div>
+          <form th:action="@{/staff/bookings}" method="get" class="d-flex gap-2">
+            <select name="branchId" class="form-select" onchange="this.form.submit()">
+              <option value="">-- Tất cả chi nhánh --</option>
+              <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}" th:selected="${selectedBranchId == b.id}"></option>
+            </select>
+          </form>
+        </div>
+      </div>
+
+      <!-- Flash Messages -->
+      <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Mã BK</th>
+                <th scope="col">Khách hàng</th>
+                <th scope="col">Thú cưng</th>
+                <th scope="col">Dịch vụ</th>
+                <th scope="col">Chi nhánh</th>
+                <th scope="col">Ngày & Khung giờ</th>
+                <th scope="col">Tổng tiền</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col" class="text-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${bookings.empty}">
+                <td colspan="9" class="text-center py-5 text-muted">Không có lịch đặt nào tại chi nhánh được chọn</td>
+              </tr>
+              <tr th:each="b : ${bookings}">
+                <td class="fw-bold font-monospace text-primary" th:text="${b.code}"></td>
+                <td>
+                  <div class="fw-semibold" th:text="${b.userFullName}"></div>
+                  <small class="text-muted" th:text="${b.userEmail}"></small>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border" th:text="${b.petName}"></span>
+                </td>
+                <td th:text="${b.serviceName}"></td>
+                <td class="small" th:text="${b.branchName}"></td>
+                <td>
+                  <div class="small fw-semibold" th:text="${#temporals.format(b.slotDate, 'dd/MM/yyyy')}"></div>
+                  <div class="small text-muted" th:text="${b.startTime} + ' - ' + ${b.endTime}"></div>
+                </td>
+                <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(b.totalPrice, 0, 'COMMA', 0, 'POINT')} + 'đ'"></td>
+                <td>
+                  <span th:class="'badge ' + 
+                        (${b.status.name() == 'PENDING'} ? 'bg-warning text-dark' : 
+                        (${b.status.name() == 'CONFIRMED'} ? 'bg-info text-dark' : 
+                        (${b.status.name() == 'CHECKED_IN'} ? 'bg-primary' : 
+                        (${b.status.name() == 'IN_PROGRESS'} ? 'bg-secondary' : 
+                        (${b.status.name() == 'COMPLETED'} ? 'bg-success' : 'bg-danger')))))"
+                        th:text="${b.status}"></span>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1" th:if="${b.status.name() != 'COMPLETED' and b.status.name() != 'CANCELLED'}">
+                    <!-- Nút Xác nhận nếu PENDING -->
+                    <form th:if="${b.status.name() == 'PENDING'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                      <input type="hidden" name="status" value="CONFIRMED">
+                      <button type="submit" class="btn btn-sm btn-info text-white">Xác nhận</button>
+                    </form>
+
+                    <!-- Nút Check-in nếu CONFIRMED -->
+                    <form th:if="${b.status.name() == 'CONFIRMED'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                      <input type="hidden" name="status" value="CHECKED_IN">
+                      <button type="submit" class="btn btn-sm btn-primary">Check-in</button>
+                    </form>
+
+                    <!-- Nút Đang làm nếu CHECKED_IN -->
+                    <form th:if="${b.status.name() == 'CHECKED_IN'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                      <input type="hidden" name="status" value="IN_PROGRESS">
+                      <button type="submit" class="btn btn-sm btn-secondary">Đang làm</button>
+                    </form>
+
+                    <!-- Nút Hoàn thành nếu IN_PROGRESS -->
+                    <form th:if="${b.status.name() == 'IN_PROGRESS'}" th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post">
+                      <input type="hidden" name="status" value="COMPLETED">
+                      <button type="submit" class="btn btn-sm btn-success">Hoàn thành</button>
+                    </form>
+
+                    <!-- Nút Hủy nếu PENDING hoặc CONFIRMED -->
+                    <form th:if="${b.status.name() == 'PENDING' or b.status.name() == 'CONFIRMED'}" 
+                          th:action="@{'/staff/bookings/' + ${b.id} + '/status'}" method="post"
+                          onsubmit="return confirm('Bạn có chắc muốn hủy lịch này?');">
+                      <input type="hidden" name="status" value="CANCELLED">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>
+                    </form>
+                  </div>
+                  <span th:if="${b.status.name() == 'COMPLETED' or b.status.name() == 'CANCELLED'}" class="text-muted small">Đã đóng</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+  </body>
+</html>

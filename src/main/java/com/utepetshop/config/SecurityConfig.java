@@ -32,11 +32,17 @@ public class SecurityConfig {
                 a.requestMatchers(
                         "/",
                         "/products/**",
+                        "/services/**",
                         "/login",
                         "/register",
                         "/css/**",
+                        "/js/**",
+                        "/images/**",
+                        "/ws/**",
                         "/api/auth/**",
-                        "/api/products/**")
+                        "/api/products/**",
+                        "/api/services/**",
+                        "/api/branches/**")
                     .permitAll()
                     .requestMatchers("/manager/**", "/api/admin/**")
                     .hasAnyRole("MANAGER", "ADMIN")

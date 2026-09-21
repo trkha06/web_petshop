@@ -16,6 +16,7 @@ public class StoreService {
   private final InventoryRepository inventories;
   private final OrderRepository orders;
   private final InventoryTransactionRepository transactions;
+  private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
   public StoreService(
       CartRepository carts,
@@ -24,7 +25,8 @@ public class StoreService {
       BranchRepository branches,
       InventoryRepository inventories,
       OrderRepository orders,
-      InventoryTransactionRepository transactions) {
+      InventoryTransactionRepository transactions,
+      org.springframework.context.ApplicationEventPublisher eventPublisher) {
     this.carts = carts;
     this.cartItems = cartItems;
     this.products = products;
@@ -32,6 +34,7 @@ public class StoreService {
     this.inventories = inventories;
     this.orders = orders;
     this.transactions = transactions;
+    this.eventPublisher = eventPublisher;
   }
 
   @Transactional
@@ -103,6 +106,11 @@ public class StoreService {
     CustomerOrder saved = orders.save(order);
     cart.getItems().clear();
     carts.save(cart);
+    if (eventPublisher != null) {
+      eventPublisher.publishEvent(
+          new com.utepetshop.service.event.OrderStatusChangedEvent(
+              this, saved, "Đơn hàng mới #" + saved.getId() + " đã được tạo"));
+    }
     return saved;
   }
 
@@ -146,6 +154,11 @@ public class StoreService {
     if (order.getStatus() != OrderStatus.PENDING)
       throw new IllegalArgumentException("Chỉ được hủy đơn ở trạng thái PENDING");
     restockAndCancel(order);
+    if (eventPublisher != null) {
+      eventPublisher.publishEvent(
+          new com.utepetshop.service.event.OrderStatusChangedEvent(
+              this, order, "Đơn hàng #" + order.getId() + " đã bị hủy"));
+    }
   }
 
   private void restockAndCancel(CustomerOrder order) {
@@ -184,5 +197,11 @@ public class StoreService {
     if (!allowed.getOrDefault(order.getStatus(), Set.of()).contains(next))
       throw new IllegalArgumentException("Không thể chuyển trạng thái đơn hàng theo cách này");
     order.setStatus(next);
+    CustomerOrder updated = orders.save(order);
+    if (eventPublisher != null) {
+      eventPublisher.publishEvent(
+          new com.utepetshop.service.event.OrderStatusChangedEvent(
+              this, updated, "Đơn hàng #" + updated.getId() + " chuyển sang " + next));
+    }
   }
 }

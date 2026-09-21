@@ -15,4 +15,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
       @Param("productId") Long productId, @Param("branchId") Long branchId);
 
   List<Inventory> findByProductId(Long productId);
+
+  long countByQuantityLessThanEqual(int threshold);
 }

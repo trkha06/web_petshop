@@ -1,0 +1,196 @@
+// File: src/main/resources/templates/bookings/create.html
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Đặt lịch dịch vụ thú cưng')}"></head>
+  <body class="bg-light">
+    <div th:replace="~{fragments/navbar :: nav}"></div>
+
+    <div class="container my-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-9">
+          <!-- Flash Messages -->
+          <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Lỗi:</strong> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white p-4">
+              <h4 class="mb-1 fw-bold">🐾 Đặt Lịch Chăm Sóc Thú Cưng</h4>
+              <p class="mb-0 small text-white-50">Hoàn thành quy trình chọn bé cưng, dịch vụ, chi nhánh và khung giờ phù hợp</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+              <form th:action="@{/bookings/create}" method="post" id="bookingForm">
+                
+                <!-- BƯỚC 1: Chọn Thú Cưng -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                    <span>1. Chọn thú cưng của bạn <span class="text-danger">*</span></span>
+                    <a th:href="@{/pets/new}" class="btn btn-outline-primary btn-sm text-decoration-none">Thêm thú cưng mới</a>
+                  </label>
+                  <div th:if="${pets.empty}" class="alert alert-warning">
+                    Bạn chưa có hồ sơ thú cưng nào. Vui lòng <a th:href="@{/pets/new}" class="fw-bold">thêm bé cưng</a> trước khi đặt lịch!
+                  </div>
+                  <select th:unless="${pets.empty}" class="form-select form-select-lg" name="petId" id="petSelect" required>
+                    <option value="">-- Chọn thú cưng --</option>
+                    <option th:each="p : ${pets}" th:value="${p.id}" th:text="${p.name} + ' (' + ${p.petType} + ' - ' + ${p.breed != null ? p.breed : 'Thuần chủng'} + ')'"></option>
+                  </select>
+                </div>
+
+                <!-- BƯỚC 2: Chọn Dịch Vụ Chăm Sóc -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">2. Chọn gói dịch vụ <span class="text-danger">*</span></label>
+                  <select class="form-select form-select-lg" name="serviceId" id="serviceSelect" required onchange="loadAvailableSlots()">
+                    <option value="">-- Chọn dịch vụ --</option>
+                    <option th:each="s : ${services}" 
+                            th:value="${s.id}" 
+                            th:selected="${selectedServiceId != null and selectedServiceId == s.id}"
+                            th:text="${s.name} + ' (' + #numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT') + 'đ - ' + ${s.durationMinutes} + ' phút)'"></option>
+                  </select>
+                </div>
+
+                <!-- BƯỚC 3: Chọn Chi Nhánh -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">3. Chọn chi nhánh <span class="text-danger">*</span></label>
+                  <select class="form-select form-select-lg" name="branchId" id="branchSelect" required onchange="loadAvailableSlots()">
+                    <option value="">-- Chọn chi nhánh tiếp nhận --</option>
+                    <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name} + ' (' + ${b.address} + ')'"></option>
+                  </select>
+                </div>
+
+                <!-- BƯỚC 4: Chọn Ngày Hẹn -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">4. Chọn ngày hẹn <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control form-control-lg" id="dateInput" name="bookingDate" required onchange="loadAvailableSlots()">
+                </div>
+
+                <!-- BƯỚC 5: Khung Giờ Khả Dụng (Availability Slots) -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">5. Khung giờ hẹn khả dụng <span class="text-danger">*</span></label>
+                  <div id="slots-loading" class="text-muted small d-none">
+                    <span class="spinner-border spinner-border-sm me-1"></span> Đang tải các khung giờ...
+                  </div>
+                  <div id="slots-empty" class="alert alert-secondary py-3 small">
+                    Vui lòng chọn đầy đủ Dịch vụ, Chi nhánh và Ngày để xem danh sách slot còn trống.
+                  </div>
+                  <div id="slots-container" class="row g-2 d-none"></div>
+                  <!-- Hidden input chứa slot được chọn -->
+                  <input type="hidden" name="slotId" id="selectedSlotId" required>
+                </div>
+
+                <!-- BƯỚC 6: Ghi Chú Thêm -->
+                <div class="mb-4">
+                  <label class="form-label fw-bold">6. Ghi chú cho nhân viên (Tùy chọn)</label>
+                  <textarea class="form-control" name="note" rows="2" placeholder="Ví dụ: Bé nhát người lạ, cần cắt móng nhẹ tay..."></textarea>
+                </div>
+
+                <div class="d-grid pt-3">
+                  <button type="submit" class="btn btn-primary btn-lg fw-bold" id="submitBtn" disabled>
+                    ✅ Xác Nhận Đặt Lịch Hẹn
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+
+    <script>
+      // Đặt ngày tối thiểu là hôm nay
+      const dateInput = document.getElementById('dateInput');
+      const todayStr = new Date().toISOString().split('T')[0];
+      dateInput.min = todayStr;
+      dateInput.value = todayStr;
+
+      function loadAvailableSlots() {
+        const branchId = document.getElementById('branchSelect').value;
+        const serviceId = document.getElementById('serviceSelect').value;
+        const date = document.getElementById('dateInput').value;
+
+        const loading = document.getElementById('slots-loading');
+        const empty = document.getElementById('slots-empty');
+        const container = document.getElementById('slots-container');
+        const submitBtn = document.getElementById('submitBtn');
+        const slotInput = document.getElementById('selectedSlotId');
+
+        slotInput.value = '';
+        submitBtn.disabled = true;
+
+        if (!branchId || !serviceId || !date) {
+          empty.textContent = 'Vui lòng chọn đầy đủ Dịch vụ, Chi nhánh và Ngày để xem danh sách slot.';
+          empty.classList.remove('d-none');
+          container.classList.add('d-none');
+          return;
+        }
+
+        loading.classList.remove('d-none');
+        empty.classList.add('d-none');
+        container.classList.add('d-none');
+        container.innerHTML = '';
+
+        fetch(`/api/branches/${branchId}/services/${serviceId}/slots?date=${date}`)
+          .then(res => res.json())
+          .then(slots => {
+            loading.classList.add('d-none');
+            if (!slots || slots.length === 0) {
+              empty.textContent = 'Không có khung giờ nào được mở trong ngày này tại chi nhánh đã chọn.';
+              empty.classList.remove('d-none');
+              return;
+            }
+
+            container.classList.remove('d-none');
+            slots.forEach(s => {
+              const col = document.createElement('div');
+              col.className = 'col-sm-6 col-md-4 col-lg-3';
+
+              const isFull = s.available <= 0;
+              const card = document.createElement('div');
+              card.className = `border rounded-3 p-3 text-center slot-card ${isFull ? 'bg-light text-muted opacity-75' : 'cursor-pointer'}`;
+              card.style.cursor = isFull ? 'not-allowed' : 'pointer';
+
+              const timeStr = `${s.startTime.substring(0, 5)} - ${s.endTime.substring(0, 5)}`;
+              const badgeClass = isFull ? 'bg-danger' : 'bg-success';
+              const statusText = isFull ? 'Hết chỗ' : `Còn ${s.available} chỗ`;
+
+              card.innerHTML = `
+                <div class="fw-bold fs-5">${timeStr}</div>
+                <div class="mt-1"><span class="badge ${badgeClass}">${statusText}</span></div>
+              `;
+
+              if (!isFull) {
+                card.onclick = function() {
+                  document.querySelectorAll('.slot-card').forEach(c => c.classList.remove('border-primary', 'bg-primary-subtle'));
+                  card.classList.add('border-primary', 'bg-primary-subtle');
+                  slotInput.value = s.id;
+                  submitBtn.disabled = false;
+                };
+              }
+
+              col.appendChild(card);
+              container.appendChild(col);
+            });
+          })
+          .catch(err => {
+            loading.classList.add('d-none');
+            empty.textContent = 'Lỗi tải danh sách khung giờ hẹn. Vui lòng thử lại.';
+            empty.classList.remove('d-none');
+          });
+      }
+
+      // Tự động load nếu đã có serviceId truyền từ trang chi tiết
+      document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('serviceSelect').value) {
+          loadAvailableSlots();
+        }
+      });
+    </script>
+  </body>
+</html>

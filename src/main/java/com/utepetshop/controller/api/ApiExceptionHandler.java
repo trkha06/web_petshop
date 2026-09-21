@@ -6,9 +6,14 @@ import org.springframework.web.bind.annotation.*;
 
 @RestControllerAdvice(basePackages = "com.utepetshop.controller.api")
 public class ApiExceptionHandler {
-  @ExceptionHandler({IllegalArgumentException.class, NoSuchElementException.class})
+  @ExceptionHandler({IllegalArgumentException.class, NoSuchElementException.class, com.utepetshop.exception.BusinessException.class})
   ResponseEntity<?> bad(RuntimeException e) {
     return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+  }
+
+  @ExceptionHandler(com.utepetshop.exception.SlotFullException.class)
+  ResponseEntity<?> slotFull(com.utepetshop.exception.SlotFullException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));
   }
 
   @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
