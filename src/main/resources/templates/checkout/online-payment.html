@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Cổng Thanh Toán Trực Tuyến')}"></head>
+  <body>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
+
+    <main class="container py-5" style="max-width: 680px">
+      <div class="panel p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="brand-icon-box mx-auto mb-3" style="width: 58px; height: 58px; font-size: 1.7rem;">
+            <span>💳</span>
+          </div>
+          <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-3 py-1 mb-2">Cổng Thanh Toán Online UTEPet Pay</span>
+          <h1 class="h3 fw-bold mb-1 text-dark">Xác Thực Thanh Toán Đơn Hàng</h1>
+          <p class="text-secondary small mb-0">Quý khách vui lòng kiểm tra thông tin chuyển khoản hoặc nhập mã OTP để hoàn tất thanh toán</p>
+        </div>
+
+        <div class="alert alert-danger rounded-4 small p-3 mb-3" th:if="${error}" th:text="${error}"></div>
+
+        <div class="p-3 bg-light rounded-4 mb-4 border border-light-subtle">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small">Mã đơn hàng:</span>
+            <strong class="text-primary font-monospace" th:text="'#' + ${order.id}">#1</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small">Người nhận:</span>
+            <span class="fw-semibold text-dark small" th:text="${order.recipientName}"></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-muted small">Email nhận thông báo:</span>
+            <span class="text-muted small" th:text="${order.recipientEmail}"></span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+            <strong class="text-dark">Tổng tiền cần thanh toán:</strong>
+            <span class="price fs-4 fw-bold text-success" th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+          </div>
+        </div>
+
+        <div class="card rounded-4 border-0 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #f6fbf8, #fdf8f0);">
+          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-qr-code-scan text-primary me-1"></i> Quét Mã VietQR / Chuyển Khoản Ngân Hàng</h6>
+          <div class="d-flex justify-content-center mb-3">
+            <div class="p-3 bg-white rounded-4 shadow-sm border d-inline-block">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=UTEPET_PAYMENT_DEMO" 
+                   alt="VietQR Mock" class="rounded-3" style="width: 160px; height: 160px;">
+            </div>
+          </div>
+          <div class="small text-muted text-start bg-white p-3 rounded-3 border mx-auto" style="max-width: 440px;">
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span>Ngân hàng:</span>
+              <strong class="text-dark">Vietcombank (VCB)</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span>Số tài khoản:</span>
+              <strong class="text-primary font-monospace">1012345678</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1 border-bottom">
+              <span>Chủ tài khoản:</span>
+              <strong class="text-dark">CONG TY UTEPET CARE</strong>
+            </div>
+            <div class="d-flex justify-content-between py-1">
+              <span>Nội dung chuyển khoản:</span>
+              <strong class="text-danger font-monospace" th:text="'UTEPET ' + ${order.id}"></strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-4 bg-warning bg-opacity-10 border border-warning border-opacity-25 mb-4 text-center">
+          <span class="badge bg-warning text-dark fw-bold rounded-pill px-3 py-1 mb-1">Môi trường thử nghiệm (Demo)</span>
+          <p class="small text-muted mb-0">Hệ thống hỗ trợ mã xác thực thanh toán demo nhanh: <strong class="text-primary fs-6 font-monospace">123456</strong></p>
+        </div>
+
+        <form th:action="@{'/checkout/online-payment/' + ${order.id} + '/confirm'}" method="post">
+          <div class="mb-4 text-center">
+            <label class="form-label small fw-semibold text-secondary mb-2">Nhập mã xác thực OTP thanh toán (6 số)</label>
+            <input class="form-control form-control-lg text-center font-monospace fw-bold fs-3 mx-auto" 
+                   style="max-width: 280px; letter-spacing: 8px; border-radius: 16px;"
+                   type="text" 
+                   name="otp" 
+                   maxlength="6" 
+                   pattern="[0-9]{6}"
+                   inputmode="numeric"
+                   required 
+                   autofocus 
+                   value="123456" />
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm mb-3">
+            Xác Nhận & Hoàn Tất Thanh Toán 🐾
+          </button>
+        </form>
+
+        <div class="text-center pt-2 border-top">
+          <a th:href="@{'/orders/' + ${order.id}}" class="small text-secondary text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> Xem chi tiết đơn hàng (Thanh toán sau)
+          </a>
+        </div>
+      </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

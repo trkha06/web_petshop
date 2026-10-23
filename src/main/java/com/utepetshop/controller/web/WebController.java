@@ -227,12 +227,57 @@ public class WebController {
             promotionCode);
     try {
       CustomerOrder order = store.checkout(current.required(), request);
+      if (request.paymentMethod() == PaymentMethod.ONLINE_PAYMENT) {
+        return "redirect:/checkout/online-payment/" + order.getId();
+      }
       ra.addFlashAttribute("success", "Đặt hàng thành công. Mã đơn #" + order.getId());
       return "redirect:/orders/" + order.getId();
     } catch (IllegalArgumentException e) {
       ra.addFlashAttribute("error", e.getMessage());
       ra.addFlashAttribute("checkoutData", request);
       return "redirect:/checkout";
+    }
+  }
+
+  @GetMapping("/checkout/online-payment/{id}")
+  String onlinePaymentPage(@PathVariable Long id, Model model) {
+    User user = current.required();
+    CustomerOrder order =
+        orders
+            .findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
+    if (!order.getCustomer().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("Bạn không có quyền truy cập đơn hàng này");
+    }
+    model.addAttribute("order", order);
+    return "checkout/online-payment";
+  }
+
+  @PostMapping("/checkout/online-payment/{id}/confirm")
+  String confirmOnlinePayment(
+      @PathVariable Long id,
+      @RequestParam(required = false) String otp,
+      RedirectAttributes ra) {
+    User user = current.required();
+    CustomerOrder order =
+        orders
+            .findById(id)
+            .orElseThrow(() -> new NoSuchElementException("Không tìm thấy đơn hàng"));
+    if (!order.getCustomer().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("Bạn không có quyền truy cập đơn hàng này");
+    }
+    if (otp == null || otp.trim().length() != 6) {
+      ra.addFlashAttribute("error", "Mã xác thực OTP phải gồm 6 chữ số");
+      return "redirect:/checkout/online-payment/" + id;
+    }
+    try {
+      store.transition(id, OrderStatus.CONFIRMED);
+      ra.addFlashAttribute(
+          "success", "Thanh toán trực tuyến thành công! Đơn hàng #" + id + " đã được xác nhận.");
+      return "redirect:/orders/" + id;
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", e.getMessage());
+      return "redirect:/checkout/online-payment/" + id;
     }
   }
 
