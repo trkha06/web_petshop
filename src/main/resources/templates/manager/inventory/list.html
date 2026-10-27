@@ -4,7 +4,13 @@
   <body>
     <nav th:replace="~{fragments/navbar :: nav}"></nav>
     <main class="container py-5">
-      <h1 class="h3 fw-bold mb-4">Tồn kho đa chi nhánh</h1>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="h3 fw-bold mb-1">Tồn kho đa chi nhánh</h1>
+          <p class="text-muted mb-0">Nhập hoặc điều chỉnh số lượng sản phẩm có thể bán tại từng chi nhánh.</p>
+        </div>
+        <a class="btn btn-outline-primary" th:href="@{/manager/products}">Quản lý sản phẩm</a>
+      </div>
       <div
         class="alert alert-success"
         th:if="${success}"
@@ -27,7 +33,10 @@
               th:each="i:${inventories}"
               th:classappend="${i.quantity<=i.lowStockThreshold}?'table-warning'"
             >
-              <td th:text="${i.product.name}"></td>
+              <td>
+                <strong th:text="${i.product.name}"></strong>
+                <div class="small text-muted" th:text="${i.product.sku}"></div>
+              </td>
               <td th:text="${i.branch.name}"></td>
               <td><strong th:text="${i.quantity}"></strong></td>
               <td th:text="${i.lowStockThreshold}"></td>
@@ -42,6 +51,7 @@
                     style="width: 90px"
                     name="delta"
                     type="number"
+                    required
                     placeholder="+/-"
                   /><input
                     class="form-control form-control-sm"

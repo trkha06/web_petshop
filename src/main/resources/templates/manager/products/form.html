@@ -1,102 +1,135 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Lưu sản phẩm')}"></head>
+  <head th:replace="~{fragments/header :: head('Thông tin sản phẩm')}"></head>
   <body>
     <nav th:replace="~{fragments/navbar :: nav}"></nav>
-    <main class="container py-5" style="max-width: 820px">
-      <h1
-        class="h3 fw-bold mb-4"
-        th:text="${product==null?'Thêm sản phẩm':'Sửa sản phẩm'}"
-      ></h1>
+    <main class="container py-5" style="max-width: 900px">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1
+            class="h3 fw-bold mb-1"
+            th:text="${product == null ? 'Thêm sản phẩm mới' : 'Chỉnh sửa sản phẩm'}"
+          ></h1>
+          <p class="text-muted mb-0">Nhập đầy đủ thông tin để sản phẩm hiển thị chính xác tại cửa hàng.</p>
+        </div>
+        <a class="btn btn-outline-secondary" th:href="@{/manager/products}">Quay lại</a>
+      </div>
+
       <form class="panel p-4" method="post" th:action="@{/manager/products}">
         <input type="hidden" name="id" th:value="${product?.id}" />
         <div class="row g-3">
           <div class="col-md-4">
-            <label class="form-label">SKU</label
-            ><input
-              class="form-control"
+            <label class="form-label fw-semibold" for="sku">SKU</label>
+            <input
+              id="sku"
+              class="form-control text-uppercase"
               name="sku"
+              maxlength="80"
               required
+              placeholder="VD: DOG-004"
               th:value="${product?.sku}"
             />
           </div>
           <div class="col-md-8">
-            <label class="form-label">Tên sản phẩm</label
-            ><input
+            <label class="form-label fw-semibold" for="name">Tên sản phẩm</label>
+            <input
+              id="name"
               class="form-control"
               name="name"
+              maxlength="255"
               required
+              placeholder="Tên hiển thị tại cửa hàng"
               th:value="${product?.name}"
             />
           </div>
           <div class="col-12">
-            <label class="form-label">Mô tả</label
-            ><textarea
+            <label class="form-label fw-semibold" for="description">Mô tả</label>
+            <textarea
+              id="description"
               class="form-control"
               name="description"
-              rows="3"
+              rows="4"
+              maxlength="2000"
+              placeholder="Mô tả công dụng, thành phần hoặc cách sử dụng"
               th:text="${product?.description}"
             ></textarea>
           </div>
           <div class="col-md-4">
-            <label class="form-label">Giá</label
-            ><input
-              class="form-control"
-              type="number"
-              min="0"
-              name="price"
-              required
-              th:value="${product?.price}"
-            />
+            <label class="form-label fw-semibold" for="price">Giá bán</label>
+            <div class="input-group">
+              <input
+                id="price"
+                class="form-control"
+                type="number"
+                min="1"
+                step="1000"
+                name="price"
+                required
+                th:value="${product?.price}"
+              />
+              <span class="input-group-text">đ</span>
+            </div>
           </div>
           <div class="col-md-4">
-            <label class="form-label">Danh mục</label
-            ><select class="form-select" name="categoryId">
+            <label class="form-label fw-semibold" for="categoryId">Danh mục</label>
+            <select id="categoryId" class="form-select" name="categoryId" required>
+              <option value="" disabled th:selected="${product == null}">Chọn danh mục</option>
               <option
-                th:each="c:${categories}"
-                th:value="${c.id}"
-                th:text="${c.name}"
-                th:selected="${product?.category?.id==c.id}"
+                th:each="category : ${categories}"
+                th:value="${category.id}"
+                th:text="${category.name}"
+                th:selected="${product?.category?.id == category.id}"
               ></option>
             </select>
           </div>
           <div class="col-md-4">
-            <label class="form-label">Thương hiệu</label
-            ><select class="form-select" name="brandId">
+            <label class="form-label fw-semibold" for="brandId">Thương hiệu</label>
+            <select id="brandId" class="form-select" name="brandId" required>
+              <option value="" disabled th:selected="${product == null}">Chọn thương hiệu</option>
               <option
-                th:each="b:${brands}"
-                th:value="${b.id}"
-                th:text="${b.name}"
-                th:selected="${product?.brand?.id==b.id}"
+                th:each="brand : ${brands}"
+                th:value="${brand.id}"
+                th:text="${brand.name}"
+                th:selected="${product?.brand?.id == brand.id}"
               ></option>
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">Loại thú cưng</label
-            ><select class="form-select" name="petType">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold" for="petType">Dành cho</label>
+            <select id="petType" class="form-select" name="petType" required>
+              <option value="" disabled th:selected="${product == null}">Chọn loại thú cưng</option>
               <option
-                th:each="t:${petTypes}"
-                th:value="${t}"
-                th:text="${t}"
-                th:selected="${product?.petType==t}"
+                th:each="type : ${petTypes}"
+                th:value="${type}"
+                th:text="${type}"
+                th:selected="${product?.petType == type}"
               ></option>
             </select>
           </div>
-          <div class="col-md-6">
-            <label class="form-label">URL ảnh đại diện</label
-            ><input
+          <div class="col-md-8">
+            <label class="form-label fw-semibold" for="imageUrl">URL ảnh sản phẩm</label>
+            <input
+              id="imageUrl"
               class="form-control"
               type="url"
               name="imageUrl"
+              placeholder="https://..."
               th:value="${product?.imageUrl}"
             />
           </div>
         </div>
+
+        <div class="alert alert-info mt-4 mb-0" th:if="${product == null}">
+          Hệ thống sẽ tạo tồn kho bằng 0 cho từng chi nhánh. Sau khi lưu, vào mục
+          <strong>Quản lý tồn kho</strong> để nhập số lượng có thể bán.
+        </div>
+
         <div class="mt-4 d-flex gap-2">
-          <button class="btn btn-primary">Lưu sản phẩm</button
-          ><a class="btn btn-light" th:href="@{/manager/products}">Hủy</a>
+          <button class="btn btn-primary px-4" type="submit">Lưu sản phẩm</button>
+          <a class="btn btn-light" th:href="@{/manager/products}">Hủy</a>
         </div>
       </form>
     </main>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>

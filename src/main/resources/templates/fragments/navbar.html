@@ -41,6 +41,8 @@
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><hr class="dropdown-divider"></li>
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><h6 class="dropdown-header text-uppercase small">Quản lý</h6></li>
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/dashboard}">Báo cáo & Analytics</a></li>
+            <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/products}">Quản lý sản phẩm</a></li>
+            <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/inventory}">Quản lý tồn kho</a></li>
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/services}">Quản lý Dịch vụ</a></li>
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/slots}">Quản lý Slot hẹn</a></li>
             <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item" th:href="@{/manager/promotions}">Khuyến mãi / Voucher</a></li>
@@ -81,7 +83,6 @@
   </div>
 </nav>
 
-<!-- Toast Container hiển thị thông báo STOMP Realtime -->
 <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11000">
   <div id="realtime-toast" class="toast align-items-center text-bg-primary border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
     <div class="d-flex">
@@ -94,7 +95,6 @@
   </div>
 </div>
 
-<!-- Script kết nối STOMP & SockJS realtime -->
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 <script>
@@ -104,10 +104,9 @@
     try {
       const socket = new SockJS('/ws');
       stompClient = Stomp.over(socket);
-      stompClient.debug = null; // Tắt debug log rác console
+      stompClient.debug = null;
 
       stompClient.connect({}, function (frame) {
-        // Lắng nghe kênh thông báo đích danh của người dùng
         stompClient.subscribe('/user/queue/notifications', function (notification) {
           const payload = JSON.parse(notification.body);
           showToast(payload.title, payload.message);
@@ -115,7 +114,6 @@
           prependNotificationItem(payload);
         });
       }, function (error) {
-        // Tự động kết nối lại sau 10s nếu rớt mạng
         setTimeout(initRealtimeNotifications, 10000);
       });
     } catch (e) {

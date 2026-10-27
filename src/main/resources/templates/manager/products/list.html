@@ -4,57 +4,93 @@
   <body>
     <nav th:replace="~{fragments/navbar :: nav}"></nav>
     <main class="container py-5">
-      <div class="d-flex justify-content-between mb-4">
-        <h1 class="h3 fw-bold">Quản lý sản phẩm</h1>
-        <a class="btn btn-primary" th:href="@{/manager/products/new}"
-          >+ Thêm sản phẩm</a
-        >
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+          <h1 class="h3 fw-bold mb-1">Quản lý sản phẩm</h1>
+          <p class="text-muted mb-0">Thêm, chỉnh sửa và kiểm soát sản phẩm đang bán.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-outline-primary" th:href="@{/manager/inventory}">Tồn kho</a>
+          <a class="btn btn-primary" th:href="@{/manager/products/new}">+ Thêm sản phẩm</a>
+        </div>
       </div>
-      <div
-        class="alert alert-success"
-        th:if="${success}"
-        th:text="${success}"
-      ></div>
+
+      <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
       <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
       <div class="panel p-3 table-responsive">
-        <table class="table">
+        <table class="table align-middle mb-0">
           <thead>
             <tr>
+              <th>Ảnh</th>
               <th>SKU</th>
               <th>Sản phẩm</th>
-              <th>Giá</th>
+              <th>Phân loại</th>
+              <th>Giá bán</th>
               <th>Trạng thái</th>
-              <th></th>
+              <th class="text-end">Thao tác</th>
             </tr>
           </thead>
           <tbody>
-            <tr th:each="p:${products}">
-              <td th:text="${p.sku}"></td>
+            <tr th:each="product : ${products}">
               <td>
-                <strong th:text="${p.name}"></strong>
+                <img
+                  th:if="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                  th:src="${product.imageUrl}"
+                  th:alt="${product.name}"
+                  class="rounded border object-fit-cover"
+                  width="64"
+                  height="64"
+                />
                 <div
-                  class="small text-muted"
-                  th:text="|${p.category.name} · ${p.brand.name}|"
-                ></div>
-              </td>
-              <td
-                th:text="${#numbers.formatDecimal(p.price,0,'COMMA',0,'POINT')}+' đ'"
-              ></td>
-              <td th:text="${p.active?'ACTIVE':'INACTIVE'}"></td>
-              <td class="text-end">
-                <a
-                  class="btn btn-sm btn-outline-success"
-                  th:href="@{/manager/products/{id}/edit(id=${p.id})}"
-                  >Sửa</a
+                  th:unless="${product.imageUrl != null and !product.imageUrl.isBlank()}"
+                  class="rounded border bg-light d-flex align-items-center justify-content-center"
+                  style="width: 64px; height: 64px"
                 >
+                  🐾
+                </div>
+              </td>
+              <td><code th:text="${product.sku}"></code></td>
+              <td>
+                <strong th:text="${product.name}"></strong>
+                <div class="small text-muted" th:text="${product.brand.name}"></div>
+              </td>
+              <td>
+                <div th:text="${product.category.name}"></div>
+                <span class="badge text-bg-light" th:text="${product.petType}"></span>
+              </td>
+              <td class="fw-semibold text-nowrap" th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT')} + ' đ'"></td>
+              <td>
+                <span class="badge text-bg-success" th:if="${product.active}">Đang bán</span>
+                <span class="badge text-bg-secondary" th:unless="${product.active}">Ngừng bán</span>
+              </td>
+              <td class="text-end text-nowrap">
+                <a
+                  class="btn btn-sm btn-outline-secondary"
+                  th:if="${product.active}"
+                  th:href="@{/products/{id}(id=${product.id})}"
+                >Xem</a>
+                <a
+                  class="btn btn-sm btn-outline-primary"
+                  th:href="@{/manager/products/{id}/edit(id=${product.id})}"
+                >Sửa</a>
                 <form
                   class="d-inline"
-                  th:if="${p.active}"
-                  th:action="@{/manager/products/{id}/deactivate(id=${p.id})}"
+                  th:action="@{/manager/products/{id}/status(id=${product.id})}"
                   method="post"
                 >
-                  <button class="btn btn-sm btn-outline-danger">Ẩn</button>
+                  <input type="hidden" name="active" th:value="${!product.active}" />
+                  <button
+                    class="btn btn-sm"
+                    th:classappend="${product.active} ? 'btn-outline-danger' : 'btn-outline-success'"
+                    th:text="${product.active} ? 'Ngừng bán' : 'Bán lại'"
+                  ></button>
                 </form>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(products)}">
+              <td colspan="7" class="text-center text-muted py-5">
+                Chưa có sản phẩm. Hãy thêm sản phẩm đầu tiên.
               </td>
             </tr>
           </tbody>
