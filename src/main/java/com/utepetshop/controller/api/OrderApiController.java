@@ -29,8 +29,7 @@ public class OrderApiController {
 
   @PostMapping
   public ResponseEntity<CustomerOrder> checkout(@Valid @RequestBody CheckoutRequest req) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(store.checkout(current.required(), req.paymentMethod(), req.deliveryType()));
+    return ResponseEntity.status(HttpStatus.CREATED).body(store.checkout(current.required(), req));
   }
 
   @PostMapping("/{id}/cancel")

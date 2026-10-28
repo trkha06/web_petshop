@@ -1,32 +1,166 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Checkout')}"></head>
+  <head th:replace="~{fragments/header :: head('Thanh toán')}"></head>
   <body>
     <nav th:replace="~{fragments/navbar :: nav}"></nav>
-    <main class="container py-5" style="max-width: 720px">
+    <main class="container py-5" style="max-width: 1100px">
       <h1 class="h3 fw-bold mb-4">Xác nhận đơn hàng</h1>
-      <div class="panel p-4">
-        <form method="post" th:action="@{/checkout}">
-          <h2 class="h6">Phương thức nhận hàng</h2>
-          <select class="form-select mb-4" name="deliveryType">
-            <option value="DELIVERY">Giao tận nơi</option>
-            <option value="PICKUP_AT_STORE">Nhận tại cửa hàng</option>
-          </select>
-          <h2 class="h6">Thanh toán</h2>
-          <select class="form-select mb-4" name="paymentMethod">
-            <option value="COD">Thanh toán khi nhận hàng (COD)</option>
-            <option value="ONLINE_PAYMENT">
-              Thanh toán online (sẵn sàng mở rộng)
-            </option>
-          </select>
-          <p class="small text-muted">
-            Tồn kho sẽ được khoá và kiểm tra lại ngay khi đặt hàng để tránh bán
-            vượt số lượng.
-          </p>
-          <button class="btn btn-primary w-100">Đặt hàng</button>
-        </form>
-      </div>
+      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+
+      <form method="post" th:action="@{/checkout}" class="row g-4">
+        <div class="col-lg-7">
+          <div class="panel p-4 mb-4">
+            <h2 class="h5 fw-bold mb-3">Thông tin người nhận</h2>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="recipientName">Họ và tên</label>
+                <input class="form-control" id="recipientName" name="recipientName" maxlength="100" required th:value="${checkoutData != null ? checkoutData.recipientName : (defaultAddress != null ? defaultAddress.recipientName : customer.fullName)}" />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="recipientPhone">Số điện thoại</label>
+                <input class="form-control" id="recipientPhone" name="recipientPhone" maxlength="20" inputmode="tel" required th:value="${checkoutData != null ? checkoutData.recipientPhone : (defaultAddress != null ? defaultAddress.phone : (customer.phone != null ? customer.phone : ''))}" />
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="recipientEmail">Email</label>
+                <input class="form-control" id="recipientEmail" name="recipientEmail" type="email" maxlength="150" required th:value="${checkoutData != null ? checkoutData.recipientEmail : customer.email}" />
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="shippingAddress">Địa chỉ giao hàng</label>
+                <textarea class="form-control" id="shippingAddress" name="shippingAddress" rows="3" maxlength="500" required th:text="${checkoutData != null ? checkoutData.shippingAddress : defaultShippingAddress}"></textarea>
+                <div class="form-text" id="addressHelp">Nhập đầy đủ số nhà, đường, phường/xã, quận/huyện và tỉnh/thành phố.</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="customerNote">Ghi chú</label>
+                <textarea class="form-control" id="customerNote" name="customerNote" rows="3" maxlength="500" placeholder="Thời gian nhận hàng hoặc yêu cầu khác" th:text="${checkoutData != null ? checkoutData.customerNote : ''}"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel p-4">
+            <h2 class="h5 fw-bold mb-3">Giao hàng và thanh toán</h2>
+            <label class="form-label" for="deliveryType">Phương thức nhận hàng</label>
+            <select class="form-select mb-3" id="deliveryType" name="deliveryType" required>
+              <option value="DELIVERY">Giao tận nơi</option>
+              <option value="PICKUP_AT_STORE">Nhận tại cửa hàng</option>
+            </select>
+            <label class="form-label" for="paymentMethod">Phương thức thanh toán</label>
+            <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+              <option value="COD">Thanh toán khi nhận hàng (COD)</option>
+              <option value="ONLINE_PAYMENT">Thanh toán online</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="panel p-4 position-sticky" style="top: 96px">
+            <h2 class="h5 fw-bold mb-3">Đơn hàng của bạn</h2>
+            <div class="d-flex justify-content-between gap-3 py-2 border-bottom" th:each="item : ${cart.items}">
+              <div>
+                <strong th:text="${item.product.name}"></strong>
+                <div class="small text-muted" th:text="|Số lượng: ${item.quantity}|"></div>
+              </div>
+              <span class="text-nowrap" th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+            </div>
+
+            <label class="form-label mt-4" for="promotionCode">Mã giảm giá</label>
+            <div class="input-group">
+              <input class="form-control text-uppercase" id="promotionCode" name="promotionCode" maxlength="50" placeholder="Nhập mã giảm giá" th:value="${checkoutData != null ? checkoutData.promotionCode : ''}" />
+              <button class="btn btn-outline-success" id="applyPromotion" type="button">Áp dụng</button>
+            </div>
+            <div class="small mt-2" id="promotionMessage"></div>
+
+            <div class="mt-4" id="checkoutSummary" th:attr="data-subtotal=${subtotal}">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Tạm tính</span>
+                <strong th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong>
+              </div>
+              <div class="d-flex justify-content-between text-success mb-2" id="discountRow" hidden>
+                <span>Giảm giá</span>
+                <strong id="discountAmount"></strong>
+              </div>
+              <hr />
+              <div class="d-flex justify-content-between mb-4">
+                <strong>Tổng thanh toán</strong>
+                <strong class="price" id="finalAmount" th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></strong>
+              </div>
+            </div>
+
+            <button class="btn btn-primary w-100">Đặt hàng</button>
+            <p class="small text-muted text-center mt-3 mb-0">Mã giảm giá và tồn kho sẽ được kiểm tra lại khi đặt hàng.</p>
+          </div>
+        </div>
+      </form>
     </main>
     <footer th:replace="~{fragments/footer :: footer}"></footer>
+    <script>
+      const deliveryType = document.getElementById('deliveryType');
+      const shippingAddress = document.getElementById('shippingAddress');
+      const addressHelp = document.getElementById('addressHelp');
+      const applyPromotion = document.getElementById('applyPromotion');
+      const promotionCode = document.getElementById('promotionCode');
+      const promotionMessage = document.getElementById('promotionMessage');
+      const summary = document.getElementById('checkoutSummary');
+      const discountRow = document.getElementById('discountRow');
+      const discountAmount = document.getElementById('discountAmount');
+      const finalAmount = document.getElementById('finalAmount');
+      const subtotal = Number(summary.dataset.subtotal);
+
+      function formatMoney(value) {
+        return new Intl.NumberFormat('vi-VN').format(value) + ' đ';
+      }
+
+      function updateAddressRequirement() {
+        const needsAddress = deliveryType.value === 'DELIVERY';
+        shippingAddress.required = needsAddress;
+        addressHelp.textContent = needsAddress
+          ? 'Nhập đầy đủ số nhà, đường, phường/xã, quận/huyện và tỉnh/thành phố.'
+          : 'Bạn sẽ nhận hàng tại chi nhánh đang xử lý giỏ hàng.';
+      }
+
+      deliveryType.addEventListener('change', updateAddressRequirement);
+      updateAddressRequirement();
+
+      applyPromotion.addEventListener('click', async function () {
+        const code = promotionCode.value.trim();
+        if (!code) {
+          promotionMessage.className = 'small mt-2 text-danger';
+          promotionMessage.textContent = 'Vui lòng nhập mã giảm giá.';
+          return;
+        }
+
+        applyPromotion.disabled = true;
+        promotionMessage.className = 'small mt-2 text-muted';
+        promotionMessage.textContent = 'Đang kiểm tra mã...';
+
+        try {
+          const response = await fetch('/api/promotions/apply', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code: code, orderAmount: subtotal})
+          });
+          const result = await response.json();
+
+          if (!response.ok || !result.valid) {
+            promotionMessage.className = 'small mt-2 text-danger';
+            promotionMessage.textContent = result.message || 'Không thể áp dụng mã giảm giá.';
+            discountRow.hidden = true;
+            finalAmount.textContent = formatMoney(subtotal);
+            return;
+          }
+
+          promotionCode.value = result.code;
+          promotionMessage.className = 'small mt-2 text-success';
+          promotionMessage.textContent = result.message;
+          discountAmount.textContent = '- ' + formatMoney(result.discountAmount);
+          finalAmount.textContent = formatMoney(result.finalAmount);
+          discountRow.hidden = false;
+        } catch (error) {
+          promotionMessage.className = 'small mt-2 text-danger';
+          promotionMessage.textContent = 'Không thể kiểm tra mã lúc này.';
+        } finally {
+          applyPromotion.disabled = false;
+        }
+      });
+    </script>
   </body>
 </html>

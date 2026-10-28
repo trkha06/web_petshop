@@ -16,7 +16,8 @@
           <thead>
             <tr>
               <th>Mã đơn</th>
-              <th>Khách</th>
+              <th>Người nhận</th>
+              <th>Địa chỉ</th>
               <th>Chi nhánh</th>
               <th>Tổng tiền</th>
               <th>Trạng thái</th>
@@ -26,7 +27,12 @@
           <tbody>
             <tr th:each="o:${orders}">
               <td th:text="|#${o.id}|"></td>
-              <td th:text="${o.customer.fullName}"></td>
+              <td>
+                <strong th:text="${o.recipientName != null ? o.recipientName : o.customer.fullName}"></strong>
+                <div class="small text-muted" th:text="${o.recipientPhone != null ? o.recipientPhone : 'Chưa có SĐT'}"></div>
+                <div class="small text-muted" th:text="${o.recipientEmail != null ? o.recipientEmail : o.customer.email}"></div>
+              </td>
+              <td class="small" style="min-width: 220px" th:text="${o.shippingAddress != null ? o.shippingAddress : 'Chưa có địa chỉ'}"></td>
               <td th:text="${o.branch.name}"></td>
               <td
                 th:text="${#numbers.formatDecimal(o.totalAmount,0,'COMMA',0,'POINT')}+' đ'"

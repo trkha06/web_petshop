@@ -1,8 +1,10 @@
 package com.utepetshop.controller.web;
 
+import com.utepetshop.dto.CheckoutRequest;
 import com.utepetshop.entity.*;
 import com.utepetshop.repository.*;
 import com.utepetshop.service.*;
+import java.math.BigDecimal;
 import java.util.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Controller;
@@ -19,6 +21,7 @@ public class WebController {
   private final InventoryRepository inventories;
   private final CartRepository carts;
   private final OrderRepository orders;
+  private final AddressRepository addresses;
   private final CurrentUser current;
   private final StoreService store;
 
@@ -30,6 +33,7 @@ public class WebController {
       InventoryRepository inventories,
       CartRepository carts,
       OrderRepository orders,
+      AddressRepository addresses,
       CurrentUser current,
       StoreService store) {
     this.products = products;
@@ -39,6 +43,7 @@ public class WebController {
     this.inventories = inventories;
     this.carts = carts;
     this.orders = orders;
+    this.addresses = addresses;
     this.current = current;
     this.store = store;
   }
@@ -103,7 +108,8 @@ public class WebController {
   }
 
   @GetMapping("/access-denied")
-  @org.springframework.web.bind.annotation.ResponseStatus(org.springframework.http.HttpStatus.FORBIDDEN)
+  @org.springframework.web.bind.annotation.ResponseStatus(
+      org.springframework.http.HttpStatus.FORBIDDEN)
   String accessDenied() {
     return "error/403";
   }
@@ -170,7 +176,31 @@ public class WebController {
   }
 
   @GetMapping("/checkout")
-  String checkout() {
+  String checkout(Model model, RedirectAttributes ra) {
+    User user = current.required();
+    Cart cart = carts.findByUserId(user.getId()).orElseGet(() -> new Cart(user));
+    if (cart.getItems().isEmpty()) {
+      ra.addFlashAttribute("error", "Giỏ hàng đang trống");
+      return "redirect:/cart";
+    }
+
+    BigDecimal subtotal =
+        cart.getItems().stream()
+            .map(
+                item ->
+                    item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    Address defaultAddress =
+        addresses.findByUserIdOrderByDefaultAddressDesc(user.getId()).stream()
+            .findFirst()
+            .orElse(null);
+
+    model.addAttribute("customer", user);
+    model.addAttribute("cart", cart);
+    model.addAttribute("subtotal", subtotal);
+    model.addAttribute("defaultAddress", defaultAddress);
+    model.addAttribute("defaultShippingAddress", formatAddress(defaultAddress));
     return "checkout/index";
   }
 
@@ -178,14 +208,31 @@ public class WebController {
   String place(
       @RequestParam PaymentMethod paymentMethod,
       @RequestParam DeliveryType deliveryType,
+      @RequestParam String recipientName,
+      @RequestParam String recipientEmail,
+      @RequestParam String recipientPhone,
+      @RequestParam(required = false) String shippingAddress,
+      @RequestParam(required = false) String customerNote,
+      @RequestParam(required = false) String promotionCode,
       RedirectAttributes ra) {
+    CheckoutRequest request =
+        new CheckoutRequest(
+            paymentMethod,
+            deliveryType,
+            recipientName,
+            recipientEmail,
+            recipientPhone,
+            shippingAddress,
+            customerNote,
+            promotionCode);
     try {
-      CustomerOrder order = store.checkout(current.required(), paymentMethod, deliveryType);
+      CustomerOrder order = store.checkout(current.required(), request);
       ra.addFlashAttribute("success", "Đặt hàng thành công. Mã đơn #" + order.getId());
       return "redirect:/orders/" + order.getId();
     } catch (IllegalArgumentException e) {
       ra.addFlashAttribute("error", e.getMessage());
-      return "redirect:/cart";
+      ra.addFlashAttribute("checkoutData", request);
+      return "redirect:/checkout";
     }
   }
 
@@ -246,5 +293,17 @@ public class WebController {
 
   private String blank(String s) {
     return s == null || s.isBlank() ? null : s.trim();
+  }
+
+  private String formatAddress(Address address) {
+    if (address == null) return "";
+    return String.join(
+        ", ",
+        Arrays.stream(
+                new String[] {
+                  address.getLine1(), address.getWard(), address.getDistrict(), address.getCity()
+                })
+            .filter(value -> value != null && !value.isBlank())
+            .toList());
   }
 }

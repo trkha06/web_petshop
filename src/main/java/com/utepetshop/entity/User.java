@@ -24,6 +24,9 @@ public class User {
   @Column(nullable = false)
   private String fullName;
 
+  @Column(length = 20)
+  private String phone;
+
   private boolean active = true;
   private LocalDateTime createdAt = LocalDateTime.now();
   private LocalDateTime updatedAt = LocalDateTime.now();

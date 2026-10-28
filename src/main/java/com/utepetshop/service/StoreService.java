@@ -1,9 +1,12 @@
 package com.utepetshop.service;
 
+import com.utepetshop.dto.CheckoutRequest;
+import com.utepetshop.dto.PromotionDiscountResponse;
 import com.utepetshop.entity.*;
 import com.utepetshop.repository.*;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.regex.Pattern;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +19,12 @@ public class StoreService {
   private final InventoryRepository inventories;
   private final OrderRepository orders;
   private final InventoryTransactionRepository transactions;
+  private final PromotionService promotions;
   private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+  private static final Pattern EMAIL_PATTERN =
+      Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+  private static final Pattern PHONE_PATTERN = Pattern.compile("^[+0-9][0-9 .()-]{8,19}$");
 
   public StoreService(
       CartRepository carts,
@@ -26,6 +34,7 @@ public class StoreService {
       InventoryRepository inventories,
       OrderRepository orders,
       InventoryTransactionRepository transactions,
+      PromotionService promotions,
       org.springframework.context.ApplicationEventPublisher eventPublisher) {
     this.carts = carts;
     this.cartItems = cartItems;
@@ -34,6 +43,7 @@ public class StoreService {
     this.inventories = inventories;
     this.orders = orders;
     this.transactions = transactions;
+    this.promotions = promotions;
     this.eventPublisher = eventPublisher;
   }
 
@@ -67,7 +77,8 @@ public class StoreService {
   }
 
   @Transactional
-  public CustomerOrder checkout(User user, PaymentMethod method, DeliveryType delivery) {
+  public CustomerOrder checkout(User user, CheckoutRequest request) {
+    validateCheckout(request);
     Cart cart =
         carts
             .findByUserId(user.getId())
@@ -76,12 +87,37 @@ public class StoreService {
     Long branchId = cart.getItems().getFirst().getBranch().getId();
     if (cart.getItems().stream().anyMatch(i -> !i.getBranch().getId().equals(branchId)))
       throw new IllegalArgumentException("Mỗi đơn hàng chỉ xử lý tại một chi nhánh");
+
+    BigDecimal subtotal =
+        cart.getItems().stream()
+            .map(
+                item ->
+                    item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    PromotionDiscountResponse discount = null;
+    String promotionCode = normalize(request.promotionCode());
+    if (promotionCode != null) {
+      discount = promotions.validateAndCalculate(promotionCode, subtotal);
+      if (!discount.isValid()) throw new IllegalArgumentException(discount.getMessage());
+    }
+
+    Branch branch = branches.getReferenceById(branchId);
     CustomerOrder order = new CustomerOrder();
     order.setCustomer(user);
-    order.setBranch(branches.getReferenceById(branchId));
-    order.setPaymentMethod(method);
-    order.setDeliveryType(delivery);
-    BigDecimal total = BigDecimal.ZERO;
+    order.setBranch(branch);
+    order.setPaymentMethod(request.paymentMethod());
+    order.setDeliveryType(request.deliveryType());
+    order.setRecipientName(request.recipientName().trim());
+    order.setRecipientEmail(request.recipientEmail().trim().toLowerCase());
+    order.setRecipientPhone(request.recipientPhone().trim());
+    order.setShippingAddress(resolveAddress(request, branch));
+    order.setCustomerNote(normalize(request.customerNote()));
+    order.setPromotionCode(discount == null ? null : discount.getCode());
+    order.setSubtotalAmount(subtotal);
+    order.setDiscountAmount(discount == null ? BigDecimal.ZERO : discount.getDiscountAmount());
+    order.setTotalAmount(discount == null ? subtotal : discount.getFinalAmount());
+
     for (CartItem ci : cart.getItems()) {
       Inventory inv =
           inventories
@@ -100,10 +136,10 @@ public class StoreService {
       oi.setUnitPrice(ci.getProduct().getPrice());
       oi.setQuantity(ci.getQuantity());
       order.getItems().add(oi);
-      total = total.add(oi.getUnitPrice().multiply(BigDecimal.valueOf(oi.getQuantity())));
     }
-    order.setTotalAmount(total);
+
     CustomerOrder saved = orders.save(order);
+    if (discount != null) promotions.usePromotion(discount.getCode());
     cart.getItems().clear();
     carts.save(cart);
     if (eventPublisher != null) {
@@ -112,6 +148,48 @@ public class StoreService {
               this, saved, "Đơn hàng mới #" + saved.getId() + " đã được tạo"));
     }
     return saved;
+  }
+
+  private void validateCheckout(CheckoutRequest request) {
+    if (request == null) throw new IllegalArgumentException("Thông tin đặt hàng không hợp lệ");
+    if (request.paymentMethod() == null || request.deliveryType() == null)
+      throw new IllegalArgumentException("Vui lòng chọn hình thức nhận hàng và thanh toán");
+
+    String name = normalize(request.recipientName());
+    if (name == null || name.length() > 100)
+      throw new IllegalArgumentException("Vui lòng nhập họ tên người nhận");
+
+    String email = normalize(request.recipientEmail());
+    if (email == null || email.length() > 150 || !EMAIL_PATTERN.matcher(email).matches())
+      throw new IllegalArgumentException("Email người nhận không hợp lệ");
+
+    String phone = normalize(request.recipientPhone());
+    String phoneDigits = phone == null ? "" : phone.replaceAll("\\D", "");
+    if (phone == null
+        || !PHONE_PATTERN.matcher(phone).matches()
+        || phoneDigits.length() < 9
+        || phoneDigits.length() > 12)
+      throw new IllegalArgumentException("Số điện thoại người nhận không hợp lệ");
+
+    if (request.deliveryType() == DeliveryType.DELIVERY
+        && normalize(request.shippingAddress()) == null)
+      throw new IllegalArgumentException("Vui lòng nhập địa chỉ giao hàng");
+
+    if (request.shippingAddress() != null && request.shippingAddress().trim().length() > 500)
+      throw new IllegalArgumentException("Địa chỉ giao hàng quá dài");
+
+    if (request.customerNote() != null && request.customerNote().trim().length() > 500)
+      throw new IllegalArgumentException("Ghi chú đơn hàng quá dài");
+  }
+
+  private String resolveAddress(CheckoutRequest request, Branch branch) {
+    String address = normalize(request.shippingAddress());
+    if (request.deliveryType() == DeliveryType.DELIVERY) return address;
+    return "Nhận tại " + branch.getName() + " - " + branch.getAddress();
+  }
+
+  private String normalize(String value) {
+    return value == null || value.isBlank() ? null : value.trim();
   }
 
   @Transactional

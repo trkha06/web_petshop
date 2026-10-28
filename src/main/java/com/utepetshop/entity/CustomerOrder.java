@@ -31,6 +31,30 @@ public class CustomerOrder {
   @Enumerated(EnumType.STRING)
   private DeliveryType deliveryType = DeliveryType.DELIVERY;
 
+  @Column(length = 100)
+  private String recipientName;
+
+  @Column(length = 150)
+  private String recipientEmail;
+
+  @Column(length = 20)
+  private String recipientPhone;
+
+  @Column(length = 500)
+  private String shippingAddress;
+
+  @Column(length = 500)
+  private String customerNote;
+
+  @Column(length = 50)
+  private String promotionCode;
+
+  @Column(precision = 15, scale = 2)
+  private BigDecimal subtotalAmount;
+
+  @Column(precision = 15, scale = 2)
+  private BigDecimal discountAmount = BigDecimal.ZERO;
+
   @Column(precision = 15, scale = 2)
   private BigDecimal totalAmount;
 

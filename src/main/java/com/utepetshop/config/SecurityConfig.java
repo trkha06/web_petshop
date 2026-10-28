@@ -53,7 +53,9 @@ public class SecurityConfig {
                         "/api/services/**",
                         "/api/branches/**")
                     .permitAll()
-                    .requestMatchers("/manager/**", "/api/admin/**")
+                    .requestMatchers("/api/promotions/apply")
+                    .authenticated()
+                    .requestMatchers("/manager/**", "/api/admin/**", "/api/promotions/**")
                     .hasAnyRole("MANAGER", "ADMIN")
                     .requestMatchers("/staff/**")
                     .hasAnyRole("STAFF", "MANAGER", "ADMIN")
@@ -61,8 +63,6 @@ public class SecurityConfig {
                     .authenticated()
                     .anyRequest()
                     .authenticated())
-        // Do not force the default URL: SavedRequest keeps an anonymous customer on the
-        // booking/order page they originally requested after a successful login.
         .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/products").permitAll())
         .logout(l -> l.logoutSuccessUrl("/products"))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
