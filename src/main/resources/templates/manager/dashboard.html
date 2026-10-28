@@ -1,4 +1,3 @@
-// File: src/main/resources/templates/manager/dashboard.html
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/header :: head('Manager - Analytics Dashboard')}"></head>
@@ -6,7 +5,7 @@
     <div th:replace="~{fragments/navbar :: nav}"></div>
 
     <div class="container-fluid px-4 my-4">
-      <!-- Header & Management Navigation -->
+      
       <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
           <h2 class="fw-bold mb-1 text-primary">📊 Trung Tâm Phân Tích & Quản Trị (Analytics Dashboard)</h2>
@@ -21,7 +20,7 @@
         </div>
       </div>
 
-      <!-- KPI Summary Cards -->
+      
       <div class="row g-3 mb-4">
         <div class="col-sm-6 col-xl-3">
           <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-primary border-4">
@@ -56,9 +55,9 @@
         </div>
       </div>
 
-      <!-- Charts Section (Chart.js) -->
+      
       <div class="row g-4 mb-4">
-        <!-- Biểu đồ Doanh thu 7 ngày -->
+        
         <div class="col-lg-8">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -71,7 +70,7 @@
           </div>
         </div>
 
-        <!-- Biểu đồ Tỷ lệ Trạng thái Booking -->
+        
         <div class="col-lg-4">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <h5 class="fw-bold mb-3 text-dark">🎯 Trạng Thái Booking</h5>
@@ -82,9 +81,9 @@
         </div>
       </div>
 
-      <!-- Top Tables Section -->
+      
       <div class="row g-4 mb-4">
-        <!-- Top Dịch Vụ -->
+        
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <h5 class="fw-bold mb-3 text-primary">🏆 Top Dịch Vụ Đặt Nhiều Nhất</h5>
@@ -112,7 +111,7 @@
           </div>
         </div>
 
-        <!-- Top Sản Phẩm Bán Chạy -->
+        
         <div class="col-lg-6">
           <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <h5 class="fw-bold mb-3 text-success">🔥 Top Sản Phẩm Bán Chạy Nhất</h5>
@@ -144,10 +143,10 @@
 
     <div th:replace="~{fragments/footer :: footer}"></div>
 
-    <!-- Chart.js CDN -->
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Khởi tạo dữ liệu biểu đồ qua Thymeleaf Inlining -->
+    
     <script th:inline="javascript">
       /*<![CDATA[*/
       const revLabels = /*[[${data.revenueDates}]]*/ [];
@@ -157,7 +156,7 @@
       const bookingLabels = Object.keys(bookingDist || {});
       const bookingCounts = Object.values(bookingDist || {});
 
-      // 1. Line/Bar Chart Doanh thu 7 ngày
+      
       const ctxRev = document.getElementById('revenueChart').getContext('2d');
       new Chart(ctxRev, {
         type: 'bar',
@@ -191,7 +190,7 @@
         }
       });
 
-      // 2. Doughnut Chart Tỷ lệ Trạng thái Booking
+      
       const ctxBook = document.getElementById('bookingStatusChart').getContext('2d');
       new Chart(ctxBook, {
         type: 'doughnut',
@@ -200,12 +199,12 @@
           datasets: [{
             data: bookingCounts.length ? bookingCounts : [1],
             backgroundColor: [
-              '#ffc107', // PENDING (vàng)
-              '#0dcaf0', // CONFIRMED (lam)
-              '#0d6efd', // CHECKED_IN (xanh dương)
-              '#6f42c1', // IN_PROGRESS (tím)
-              '#198754', // COMPLETED (xanh lá)
-              '#dc3545'  // CANCELLED (đỏ)
+              '#ffc107', 
+              '#0dcaf0', 
+              '#0d6efd', 
+              '#6f42c1', 
+              '#198754', 
+              '#dc3545'  
             ]
           }]
         },

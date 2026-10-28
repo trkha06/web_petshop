@@ -1,79 +1,110 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head(${product.name})}"></head>
+  <head th:replace="~{fragments/header :: head(${product.name} + ' - UTEPet Shop')}"></head>
   <body>
-    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
+
     <main class="container py-5">
-      <div
-        class="alert alert-success"
-        th:if="${success}"
-        th:text="${success}"
-      ></div>
-      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
-      <div class="row g-5">
-        <div class="col-md-6">
-          <img
-            class="detail-img w-100"
-            th:src="${product.imageUrl}"
-            th:alt="${product.name}"
-          />
-        </div>
-        <div class="col-md-6">
-          <span class="badge pill mb-2" th:text="${product.category.name}"
-            >Danh mục</span
-          >
-          <h1 class="fw-bold" th:text="${product.name}">Sản phẩm</h1>
-          <p class="text-muted" th:text="${product.description}"></p>
-          <p
-            class="price display-6"
-            th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT')}+' đ'"
-          ></p>
-          <div class="panel p-3 mb-3">
-            <h2 class="h6">Chọn chi nhánh & tồn kho</h2>
-            <form th:action="@{/cart/items}" method="post">
-              <input type="hidden" name="productId" th:value="${product.id}" />
-              <div class="mb-3" th:each="s,iter:${stocks}">
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    name="branchId"
-                    th:value="${s.branch.id}"
-                    th:id="|branch${s.id}|"
-                    th:checked="${iter.first}"
-                    required
-                  /><label
-                    class="form-check-label w-100"
-                    th:for="|branch${s.id}|"
-                    ><span th:text="${s.branch.name}">Chi nhánh</span
-                    ><span
-                      class="float-end text-success"
-                      th:text="|Còn ${s.quantity}|"
-                    ></span
-                  ></label>
-                </div>
-              </div>
-              <div class="d-flex gap-2">
-                <input
-                  class="form-control"
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  value="1"
-                  style="max-width: 100px"
-                /><button class="btn btn-primary flex-grow-1">
-                  Thêm vào giỏ
-                </button>
-              </div>
-            </form>
+      
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Trang chủ</a></li>
+          <li class="breadcrumb-item"><a th:href="@{/products#shop}" class="text-decoration-none">Cửa hàng</a></li>
+          <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Chi tiết sản phẩm</li>
+        </ol>
+      </nav>
+
+      
+      <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 mb-4 shadow-sm" th:if="${success}">
+        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div class="alert alert-danger alert-dismissible fade show rounded-4 p-3 mb-4 shadow-sm" th:if="${error}">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      <div class="row g-4 g-lg-5">
+        
+        <div class="col-lg-6">
+          <div class="panel p-3 text-center overflow-hidden position-sticky" style="top: 96px;">
+            <img class="img-fluid rounded-4 w-100" style="max-height: 480px; object-fit: contain; background: #faf8f5;"
+                 th:src="${product.imageUrl}" th:alt="${product.name}" />
+            <div class="d-flex justify-content-center gap-3 pt-3 text-muted small">
+              <span><i class="bi bi-shield-check text-success"></i> Hàng chính hãng 100%</span>
+              <span><i class="bi bi-truck text-primary"></i> Giao nhanh 2h TP.HCM</span>
+              <span><i class="bi bi-arrow-repeat text-warning"></i> Đổi trả 7 ngày</span>
+            </div>
           </div>
-          <p class="small text-muted mb-0">
-            SKU: <span th:text="${product.sku}"></span> · Hỗ trợ COD và nhận tại
-            cửa hàng.
-          </p>
+        </div>
+
+        
+        <div class="col-lg-6">
+          <div class="panel p-4 p-md-5">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-3 py-1" th:text="${product.category.name}">Danh mục</span>
+              <span class="badge bg-secondary-subtle text-secondary fw-semibold rounded-pill px-3 py-1" th:text="${product.brand.name}">Brand</span>
+            </div>
+
+            <h1 class="h3 fw-bold text-dark mb-3" th:text="${product.name}">Sản phẩm</h1>
+            
+            <div class="p-3 bg-light rounded-4 mb-4 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="small text-muted d-block">Giá bán niêm yết</span>
+                <span class="price display-6" th:text="${#numbers.formatDecimal(product.price,0,'COMMA',0,'POINT')} + ' đ'">0 đ</span>
+              </div>
+              <span class="badge bg-success bg-opacity-25 text-success fw-bold rounded-pill px-3 py-2">
+                <i class="bi bi-check-circle-fill me-1"></i> Còn Hàng Sẵn
+              </span>
+            </div>
+
+            <p class="text-secondary leading-relaxed mb-4" th:text="${product.description}"></p>
+
+            
+            <div class="p-4 bg-light rounded-4 mb-4 border border-light-subtle">
+              <h5 class="h6 fw-bold mb-3"><i class="bi bi-geo-alt-fill text-primary me-1"></i> Chọn Chi Nhánh Nhận Hàng & Tồn Kho:</h5>
+              
+              <form th:action="@{/cart/items}" method="post">
+                <input type="hidden" name="productId" th:value="${product.id}" />
+
+                <div class="mb-3" th:each="s,iter:${stocks}">
+                  <div class="form-check p-3 rounded-3 border bg-white mb-2" style="cursor: pointer;">
+                    <input class="form-check-input" type="radio" name="branchId"
+                           th:value="${s.branch.id}" th:id="|branch${s.id}|"
+                           th:checked="${iter.first}" required />
+                    <label class="form-check-label w-100 d-flex justify-content-between align-items-center" th:for="|branch${s.id}|" style="cursor: pointer;">
+                      <div>
+                        <strong class="text-dark" th:text="${s.branch.name}">Chi nhánh</strong>
+                        <span class="small text-muted d-block" th:text="${s.branch.address}"></span>
+                      </div>
+                      <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1" th:text="|Còn ${s.quantity} sản phẩm|"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="row g-2 pt-2">
+                  <div class="col-sm-4">
+                    <label class="small text-muted d-block mb-1">Số lượng:</label>
+                    <input class="form-control form-control-lg text-center fw-bold" type="number" name="quantity" min="1" value="1" />
+                  </div>
+                  <div class="col-sm-8 d-flex align-items-end">
+                    <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm">
+                      <i class="bi bi-bag-plus-fill me-2"></i> Thêm Vào Giỏ Hàng
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <div class="pt-2 text-muted small">
+              <span class="me-3">Mã SKU: <strong class="text-dark" th:text="${product.sku}"></strong></span>
+              <span>· Hỗ trợ giao tận nơi COD và nhận trực tiếp tại cửa hàng UTEPet.</span>
+            </div>
+          </div>
         </div>
       </div>
     </main>
+
     <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>

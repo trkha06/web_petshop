@@ -1,151 +1,170 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Hồ sơ tài khoản')}"></head>
+  <head th:replace="~{fragments/header :: head('Hồ Sơ Tài Khoản')}"></head>
   <body>
-    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
 
     <main class="container py-5">
       <div class="row g-4">
+        
         <div class="col-lg-4 col-xl-3">
           <div class="panel p-4 text-center position-sticky" style="top: 96px">
-            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold fs-2 mb-3" style="width: 88px; height: 88px" th:text="${#strings.substring(account.fullName, 0, 1).toUpperCase()}"></div>
-            <h1 class="h5 fw-bold mb-1" th:text="${account.fullName}"></h1>
+            <div class="rounded-circle brand-icon-box text-white d-inline-flex align-items-center justify-content-center fw-bold fs-2 mb-3 shadow" 
+                 style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--pet-primary), var(--pet-mint));" 
+                 th:text="${#strings.substring(account.fullName, 0, 1).toUpperCase()}"></div>
+            
+            <h1 class="h5 fw-bold mb-1 text-dark" th:text="${account.fullName}"></h1>
             <p class="text-muted small mb-3" th:text="${account.email}"></p>
-            <span class="badge text-bg-success" th:if="${account.active}">Đang hoạt động</span>
+            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-1" th:if="${account.active}">
+              <i class="bi bi-patch-check-fill me-1"></i> Thành viên đang hoạt động
+            </span>
 
             <hr class="my-4" />
 
             <nav class="nav nav-pills flex-column text-start gap-1">
-              <a class="nav-link active" href="#personal">Thông tin cá nhân</a>
-              <a class="nav-link text-dark" href="#addresses">Sổ địa chỉ</a>
-              <a class="nav-link text-dark" href="#password">Đổi mật khẩu</a>
-              <a class="nav-link text-dark" th:href="@{/orders}">Đơn hàng của tôi</a>
-              <a class="nav-link text-dark" th:href="@{/bookings}">Lịch hẹn của tôi</a>
+              <a class="nav-link active rounded-pill px-3" href="#personal"><i class="bi bi-person-fill me-2"></i> Thông tin cá nhân</a>
+              <a class="nav-link text-secondary rounded-pill px-3" href="#addresses"><i class="bi bi-geo-alt me-2"></i> Sổ địa chỉ</a>
+              <a class="nav-link text-secondary rounded-pill px-3" href="#password"><i class="bi bi-shield-lock me-2"></i> Đổi mật khẩu</a>
+              <a class="nav-link text-secondary rounded-pill px-3" th:href="@{/orders}"><i class="bi bi-bag-check me-2"></i> Đơn hàng của tôi</a>
+              <a class="nav-link text-secondary rounded-pill px-3" th:href="@{/bookings}"><i class="bi bi-calendar2-heart me-2"></i> Lịch hẹn đã đặt</a>
+              <a class="nav-link text-secondary rounded-pill px-3" th:href="@{/pets}"><i class="bi bi-heart me-2 text-danger"></i> Hồ sơ thú cưng</a>
             </nav>
           </div>
         </div>
 
+        
         <div class="col-lg-8 col-xl-9">
-          <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
-          <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
+          
+          <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4" th:if="${success}">
+            <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <div class="alert alert-danger alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4" th:if="${error}">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
 
-          <section class="panel p-4 mb-4" id="personal">
-            <div class="mb-4">
-              <h2 class="h5 fw-bold mb-1">Thông tin cá nhân</h2>
-              <p class="text-muted small mb-0">Thông tin này được dùng để điền nhanh khi đặt hàng.</p>
+          
+          <section class="panel p-4 p-md-5 mb-4" id="personal">
+            <div class="mb-4 pb-2 border-bottom">
+              <h2 class="h5 fw-bold mb-1 text-dark"><i class="bi bi-person-circle text-primary me-2"></i> Thông Tin Cá Nhân</h2>
+              <p class="text-secondary small mb-0">Dùng để điền tự động khi bạn đặt lịch spa hoặc mua sắm tại cửa hàng</p>
             </div>
 
             <form method="post" th:action="@{/account/profile}" class="row g-3">
               <div class="col-md-6">
-                <label class="form-label" for="fullName">Họ và tên</label>
+                <label class="form-label small fw-semibold" for="fullName">Họ và tên</label>
                 <input class="form-control" id="fullName" name="fullName" maxlength="100" required th:value="${account.fullName}" />
               </div>
               <div class="col-md-6">
-                <label class="form-label" for="phone">Số điện thoại</label>
-                <input class="form-control" id="phone" name="phone" maxlength="20" inputmode="tel" placeholder="Ví dụ: 0901234567" th:value="${account.phone}" />
+                <label class="form-label small fw-semibold" for="phone">Số điện thoại</label>
+                <input class="form-control" id="phone" name="phone" maxlength="20" inputmode="tel" placeholder="0901234567" th:value="${account.phone}" />
               </div>
               <div class="col-12">
-                <label class="form-label" for="email">Email đăng nhập</label>
-                <input class="form-control" id="email" type="email" readonly th:value="${account.email}" />
-                <div class="form-text">Email được giữ cố định để bảo vệ tài khoản đăng nhập.</div>
+                <label class="form-label small fw-semibold" for="email">Email đăng nhập</label>
+                <input class="form-control bg-light" id="email" type="email" readonly th:value="${account.email}" />
+                <div class="form-text small text-muted">Email được giữ cố định để bảo vệ tài khoản đăng nhập.</div>
               </div>
-              <div class="col-12 text-end">
-                <button class="btn btn-primary px-4" type="submit">Lưu thay đổi</button>
+              <div class="col-12 text-end pt-2">
+                <button class="btn btn-primary rounded-pill px-4" type="submit">Lưu Thay Đổi</button>
               </div>
             </form>
           </section>
 
-          <section class="panel p-4 mb-4" id="addresses">
-            <div class="mb-4">
-              <h2 class="h5 fw-bold mb-1">Sổ địa chỉ</h2>
-              <p class="text-muted small mb-0">Địa chỉ mặc định sẽ được điền sẵn khi thanh toán.</p>
+          
+          <section class="panel p-4 p-md-5 mb-4" id="addresses">
+            <div class="mb-4 pb-2 border-bottom">
+              <h2 class="h5 fw-bold mb-1 text-dark"><i class="bi bi-geo-alt-fill text-primary me-2"></i> Sổ Địa Chỉ Giao Hàng</h2>
+              <p class="text-secondary small mb-0">Địa chỉ mặc định sẽ tự động chọn khi thanh toán đơn hàng</p>
             </div>
 
             <div class="row g-3 mb-4" th:if="${!addresses.empty}">
               <div class="col-md-6" th:each="address : ${addresses}">
-                <div class="border rounded-3 p-3 h-100 d-flex flex-column">
+                <div class="p-3 rounded-4 border bg-white h-100 d-flex flex-column shadow-sm">
                   <div class="d-flex justify-content-between gap-2 mb-2">
-                    <strong th:text="${address.recipientName}"></strong>
-                    <span class="badge text-bg-success" th:if="${address.defaultAddress}">Mặc định</span>
+                    <strong class="text-dark" th:text="${address.recipientName}"></strong>
+                    <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2 py-1" th:if="${address.defaultAddress}">Mặc định</span>
                   </div>
-                  <div class="small mb-1" th:text="${address.phone}"></div>
-                  <div class="small text-muted flex-grow-1">
+                  <div class="small text-muted mb-1"><i class="bi bi-telephone me-1"></i> <span th:text="${address.phone}"></span></div>
+                  <div class="small text-secondary flex-grow-1">
                     <span th:text="${address.line1}"></span>
                     <span th:if="${address.ward}" th:text="|, ${address.ward}|"></span>
                     <span th:if="${address.district}" th:text="|, ${address.district}|"></span>
                     <span th:if="${address.city}" th:text="|, ${address.city}|"></span>
                   </div>
-                  <div class="d-flex gap-2 mt-3">
+                  <div class="d-flex gap-2 mt-3 pt-2 border-top">
                     <form th:if="${!address.defaultAddress}" th:action="@{/account/addresses/{id}/default(id=${address.id})}" method="post">
-                      <button class="btn btn-sm btn-outline-success" type="submit">Đặt mặc định</button>
+                      <button class="btn btn-sm btn-outline-success rounded-pill px-3" type="submit">Đặt mặc định</button>
                     </form>
                     <form th:action="@{/account/addresses/{id}/delete(id=${address.id})}" method="post">
-                      <button class="btn btn-sm btn-outline-danger" type="submit">Xóa</button>
+                      <button class="btn btn-sm btn-outline-danger rounded-pill px-3" type="submit">Xóa</button>
                     </form>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div class="border rounded-3 p-4 bg-light-subtle">
-              <h3 class="h6 fw-bold mb-3">Thêm địa chỉ mới</h3>
+            
+            <div class="p-4 rounded-4 bg-light border border-light-subtle">
+              <h3 class="h6 fw-bold mb-3 text-dark"><i class="bi bi-plus-circle me-1 text-primary"></i> Thêm Địa Chỉ Mới</h3>
               <form method="post" th:action="@{/account/addresses}" class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="recipientName">Tên người nhận</label>
+                  <label class="form-label small fw-semibold" for="recipientName">Tên người nhận</label>
                   <input class="form-control" id="recipientName" name="recipientName" maxlength="100" required th:value="${account.fullName}" />
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="addressPhone">Số điện thoại</label>
+                  <label class="form-label small fw-semibold" for="addressPhone">Số điện thoại</label>
                   <input class="form-control" id="addressPhone" name="phone" maxlength="20" inputmode="tel" required th:value="${account.phone}" />
                 </div>
                 <div class="col-12">
-                  <label class="form-label" for="line1">Số nhà và tên đường</label>
-                  <input class="form-control" id="line1" name="line1" maxlength="255" required />
+                  <label class="form-label small fw-semibold" for="line1">Số nhà và tên đường</label>
+                  <input class="form-control" id="line1" name="line1" maxlength="255" required placeholder="Ví dụ: 123 Đường số 5" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label" for="ward">Phường hoặc xã</label>
+                  <label class="form-label small fw-semibold" for="ward">Phường hoặc xã</label>
                   <input class="form-control" id="ward" name="ward" maxlength="100" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label" for="district">Quận hoặc huyện</label>
+                  <label class="form-label small fw-semibold" for="district">Quận hoặc huyện</label>
                   <input class="form-control" id="district" name="district" maxlength="100" />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label" for="city">Tỉnh hoặc thành phố</label>
-                  <input class="form-control" id="city" name="city" maxlength="100" required />
+                  <label class="form-label small fw-semibold" for="city">Tỉnh hoặc thành phố</label>
+                  <input class="form-control" id="city" name="city" maxlength="100" required placeholder="TP. Hồ Chí Minh" />
                 </div>
-                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-3 pt-2">
                   <div class="form-check">
                     <input class="form-check-input" id="defaultAddress" name="defaultAddress" type="checkbox" value="true" />
-                    <label class="form-check-label" for="defaultAddress">Đặt làm địa chỉ mặc định</label>
+                    <label class="form-check-label small" for="defaultAddress">Đặt làm địa chỉ nhận hàng mặc định</label>
                   </div>
-                  <button class="btn btn-outline-primary px-4" type="submit">Thêm địa chỉ</button>
+                  <button class="btn btn-outline-primary rounded-pill px-4" type="submit">Lưu Địa Chỉ</button>
                 </div>
               </form>
             </div>
           </section>
 
-          <section class="panel p-4" id="password">
-            <div class="mb-4">
-              <h2 class="h5 fw-bold mb-1">Đổi mật khẩu</h2>
-              <p class="text-muted small mb-0">Mật khẩu mới cần có ít nhất 8 ký tự.</p>
+          
+          <section class="panel p-4 p-md-5" id="password">
+            <div class="mb-4 pb-2 border-bottom">
+              <h2 class="h5 fw-bold mb-1 text-dark"><i class="bi bi-shield-lock-fill text-primary me-2"></i> Đổi Mật Khẩu</h2>
+              <p class="text-secondary small mb-0">Mật khẩu mới cần có ít nhất 8 ký tự để đảm bảo an toàn</p>
             </div>
 
             <form method="post" th:action="@{/account/password}" class="row g-3">
               <div class="col-12">
-                <label class="form-label" for="currentPassword">Mật khẩu hiện tại</label>
+                <label class="form-label small fw-semibold" for="currentPassword">Mật khẩu hiện tại</label>
                 <input class="form-control" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required />
               </div>
               <div class="col-md-6">
-                <label class="form-label" for="newPassword">Mật khẩu mới</label>
+                <label class="form-label small fw-semibold" for="newPassword">Mật khẩu mới</label>
                 <input class="form-control" id="newPassword" name="newPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required />
               </div>
               <div class="col-md-6">
-                <label class="form-label" for="confirmPassword">Xác nhận mật khẩu mới</label>
+                <label class="form-label small fw-semibold" for="confirmPassword">Xác nhận mật khẩu mới</label>
                 <input class="form-control" id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="72" autocomplete="new-password" required />
               </div>
-              <div class="col-12 text-end">
-                <button class="btn btn-outline-primary px-4" type="submit">Đổi mật khẩu</button>
+              <div class="col-12 text-end pt-2">
+                <button class="btn btn-outline-primary rounded-pill px-4" type="submit">Cập Nhật Mật Khẩu</button>
               </div>
             </form>
           </section>

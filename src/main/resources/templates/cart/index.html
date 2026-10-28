@@ -1,79 +1,97 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Giỏ hàng')}"></head>
+  <head th:replace="~{fragments/header :: head('Giỏ Hàng Của Bạn')}"></head>
   <body>
-    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
+
     <main class="container py-5">
-      <h1 class="h3 fw-bold mb-4">Giỏ hàng</h1>
-      <div
-        class="alert alert-success"
-        th:if="${success}"
-        th:text="${success}"
-      ></div>
-      <div class="alert alert-danger" th:if="${error}" th:text="${error}"></div>
-      <div class="panel p-3" th:if="${!cart.items.empty}">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Sản phẩm</th>
-              <th>Chi nhánh</th>
-              <th>Giá</th>
-              <th>SL</th>
-              <th>Tạm tính</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="i:${cart.items}">
-              <td><strong th:text="${i.product.name}"></strong></td>
-              <td th:text="${i.branch.name}"></td>
-              <td
-                th:text="${#numbers.formatDecimal(i.product.price,0,'COMMA',0,'POINT')}+' đ'"
-              ></td>
-              <td>
-                <form
-                  class="d-flex gap-1"
-                  th:action="@{/cart/items/{id}/quantity(id=${i.id})}"
-                  method="post"
-                >
-                  <input
-                    class="form-control form-control-sm"
-                    style="width: 70px"
-                    type="number"
-                    name="quantity"
-                    min="1"
-                    th:value="${i.quantity}"
-                  /><button class="btn btn-sm btn-outline-success">Sửa</button>
-                </form>
-              </td>
-              <td
-                th:text="${#numbers.formatDecimal(i.product.price*i.quantity,0,'COMMA',0,'POINT')}+' đ'"
-              ></td>
-              <td>
-                <form
-                  th:action="@{/cart/items/{id}/remove(id=${i.id})}"
-                  method="post"
-                >
-                  <button class="btn btn-sm btn-outline-danger">Xóa</button>
-                </form>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="text-end">
-          <a class="btn btn-primary" th:href="@{/checkout}"
-            >Tiến hành checkout</a
-          >
+      <div class="mb-4">
+        <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-3 py-1 mb-2">🛒 Mua Sắm An Toàn</span>
+        <h1 class="h3 fw-bold mb-1">Giỏ Hàng Của Bạn</h1>
+        <p class="text-secondary small mb-0">Kiểm tra lại sản phẩm và số lượng trước khi tiến hành thanh toán</p>
+      </div>
+
+      
+      <div class="alert alert-success alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4" th:if="${success}">
+        <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      <div class="alert alert-danger alert-dismissible fade show rounded-4 p-3 shadow-sm mb-4" th:if="${error}">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+
+      
+      <div class="panel p-4 p-md-5" th:if="${!cart.items.empty}">
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="py-3">Sản phẩm</th>
+                <th scope="col" class="py-3">Chi nhánh</th>
+                <th scope="col" class="py-3">Đơn giá</th>
+                <th scope="col" class="py-3" style="width: 140px;">Số lượng</th>
+                <th scope="col" class="py-3">Tạm tính</th>
+                <th scope="col" class="py-3 text-end">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="i:${cart.items}">
+                <td class="py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    <img th:if="${i.product.imageUrl}" th:src="${i.product.imageUrl}" class="rounded-3" style="width: 50px; height: 50px; object-fit: cover;" th:alt="${i.product.name}">
+                    <div>
+                      <strong class="d-block text-dark" th:text="${i.product.name}"></strong>
+                      <span class="small text-muted" th:text="|SKU: ${i.product.sku}|"></span>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-secondary" th:text="${i.branch.name}"></td>
+                <td class="fw-semibold text-dark" th:text="${#numbers.formatDecimal(i.product.price,0,'COMMA',0,'POINT')}+' đ'"></td>
+                <td>
+                  <form class="d-flex gap-2 align-items-center" th:action="@{/cart/items/{id}/quantity(id=${i.id})}" method="post">
+                    <input class="form-control form-control-sm text-center fw-bold" style="width: 65px" type="number" name="quantity" min="1" th:value="${i.quantity}" />
+                    <button class="btn btn-sm btn-outline-success rounded-pill px-2" title="Cập nhật">
+                      <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                  </form>
+                </td>
+                <td>
+                  <strong class="price" th:text="${#numbers.formatDecimal(i.product.price*i.quantity,0,'COMMA',0,'POINT')}+' đ'"></strong>
+                </td>
+                <td class="text-end">
+                  <form th:action="@{/cart/items/{id}/remove(id=${i.id})}" method="post">
+                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Xóa sản phẩm">
+                      <i class="bi bi-trash me-1"></i> Xóa
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 pt-4 border-top mt-3">
+          <a th:href="@{/products#shop}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-left me-1"></i> Tiếp tục mua sắm
+          </a>
+          <a class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm" th:href="@{/checkout}">
+            Tiến Hành Thanh Toán <i class="bi bi-arrow-right ms-1"></i>
+          </a>
         </div>
       </div>
-      <div class="panel p-5 text-center" th:if="${cart.items.empty}">
-        <div class="fs-1">🛒</div>
-        <h2 class="h5">Giỏ hàng đang trống</h2>
-        <a th:href="@{/products}" class="btn btn-outline-success"
-          >Khám phá sản phẩm</a
-        >
+
+      
+      <div class="panel p-5 text-center my-4" th:if="${cart.items.empty}">
+        <div class="fs-1 mb-2">🛒</div>
+        <h3 class="h5 fw-bold text-dark mb-2">Giỏ hàng của bạn đang trống</h3>
+        <p class="text-secondary small mb-4">Hãy ghé qua gian hàng để chọn pate, thức ăn hạt và phụ kiện chất lượng cho bé nhé!</p>
+        <a th:href="@{/products#shop}" class="btn btn-primary rounded-pill px-4 py-2 fw-bold">
+          <i class="bi bi-bag-check me-1"></i> Khám Phá Sản Phẩm Ngay
+        </a>
       </div>
     </main>
+
     <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>

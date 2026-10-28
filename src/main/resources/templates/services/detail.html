@@ -1,66 +1,135 @@
-// File: src/main/resources/templates/services/detail.html
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head(${service.name})}"></head>
-  <body class="bg-light">
-    <div th:replace="~{fragments/navbar :: nav}"></div>
+  <head th:replace="~{fragments/header :: head(${service.name} + ' - Dịch Vụ Spa')}"></head>
+  <body>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
 
-    <div class="container my-5">
-      <a th:href="@{/services}" class="btn btn-link text-decoration-none ps-0 mb-3">← Quay lại danh sách dịch vụ</a>
+    <main class="container py-5">
+      
+      <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a th:href="@{/products}" class="text-decoration-none">Trang chủ</a></li>
+          <li class="breadcrumb-item"><a th:href="@{/services}" class="text-decoration-none">Dịch vụ Spa</a></li>
+          <li class="breadcrumb-item active" aria-current="page" th:text="${service.name}">Chi tiết dịch vụ</li>
+        </ol>
+      </nav>
 
-      <div class="row g-4">
+      <div class="row g-4 g-lg-5">
+        
         <div class="col-lg-6">
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div class="panel p-2 overflow-hidden position-sticky" style="top: 96px;">
             <img th:src="${service.imageUrl != null ? service.imageUrl : 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80'}" 
-                 class="img-fluid w-100" style="max-height: 420px; object-fit: cover;" th:alt="${service.name}">
+                 class="img-fluid w-100 rounded-4" style="max-height: 440px; object-fit: cover;" th:alt="${service.name}">
+            
+            <div class="row g-2 p-3 mt-1">
+              <div class="col-6">
+                <div class="p-3 rounded-3 bg-light text-center">
+                  <i class="bi bi-clock-fill text-primary fs-5 d-block mb-1"></i>
+                  <span class="small text-muted d-block">Thời lượng</span>
+                  <strong class="text-dark" th:text="${service.durationMinutes} + ' phút'"></strong>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="p-3 rounded-3 bg-light text-center">
+                  <i class="bi bi-heart-fill text-danger fs-5 d-block mb-1"></i>
+                  <span class="small text-muted d-block">Đối tượng</span>
+                  <strong class="text-dark" th:text="${service.petType != null ? service.petType : 'Chó & Mèo'}"></strong>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
+        
         <div class="col-lg-6">
-          <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 h-100 d-flex flex-column justify-content-between">
-            <div>
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <span class="badge bg-primary px-3 py-2 fs-6" th:if="${service.petType}" th:text="|Dành cho: ${service.petType}|"></span>
-                <span class="text-muted">Thời lượng: <strong th:text="${service.durationMinutes} + ' phút'"></strong></span>
-              </div>
-              <h2 class="fw-bold text-dark mb-3" th:text="${service.name}"></h2>
-              <h3 class="text-danger fw-bold mb-4" th:text="${#numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></h3>
-              
-              <div class="text-secondary mb-4 leading-relaxed" th:text="${service.description}"></div>
+          <div class="panel p-4 p-md-5">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-3 py-2" th:if="${service.petType}" th:text="|Dành cho: ${service.petType}|"></span>
+              <span class="badge bg-success bg-opacity-25 text-success fw-bold rounded-pill px-3 py-2">
+                <i class="bi bi-check-circle-fill me-1"></i> Chuẩn Y Khoa 5 Sao
+              </span>
             </div>
 
-            <div>
-              <div class="d-grid gap-2">
-                <a th:href="@{/bookings/create(serviceId=${service.id})}" class="btn btn-primary btn-lg fw-bold py-3">
-                  🐾 Đặt Lịch Dịch Vụ Ngay
-                </a>
+            <h1 class="display-6 fw-bold text-dark mb-3" th:text="${service.name}"></h1>
+            
+            <div class="p-3 rounded-3 bg-light mb-4 d-flex justify-content-between align-items-center">
+              <div>
+                <span class="small text-muted d-block">Chi phí trọn gói</span>
+                <span class="price display-6" th:text="${#numbers.formatDecimal(service.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
               </div>
+              <span class="badge bg-warning bg-opacity-25 text-dark fw-bold rounded-pill px-3 py-2">
+                Đã bao gồm VAT & Dược liệu
+              </span>
+            </div>
+            
+            <div class="mb-4">
+              <h5 class="fw-bold mb-2">Mô Tả Gói Dịch Vụ</h5>
+              <p class="text-secondary leading-relaxed mb-0" th:text="${service.description}"></p>
+            </div>
+
+            
+            <div class="p-4 rounded-4 bg-light mb-4 border border-light-subtle">
+              <h6 class="fw-bold text-dark mb-3"><i class="bi bi-check2-circle text-primary me-2"></i> Quy Trình Bao Gồm:</h6>
+              <ul class="list-unstyled mb-0 small text-secondary">
+                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i> Khám sàng lọc da lông và trạng thái tâm lý trước khi tắm.</li>
+                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i> Ngâm bồn sục massage bọt tuyết thảo dược hữu cơ.</li>
+                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i> Vệ sinh tai, nhổ lông tai, bấm móng và mài móng an toàn.</li>
+                <li class="mb-2"><i class="bi bi-patch-check-fill text-success me-2"></i> Vắt tuyến hôi khử mùi triệt để cho bé.</li>
+                <li class="mb-0"><i class="bi bi-patch-check-fill text-success me-2"></i> Sấy phồng tạo phom và xịt dưỡng ẩm bóng lông chuyên sâu.</li>
+              </ul>
+            </div>
+
+            <div class="d-grid gap-2">
+              <a th:href="@{/bookings/create(serviceId=${service.id})}" class="btn btn-cta-book btn-lg rounded-pill py-3 fw-bold text-center">
+                🐾 Đặt Lịch Hẹn Ngay Bây Giờ
+              </a>
+              <a th:href="@{/services}" class="btn btn-outline-secondary rounded-pill py-2 text-center">
+                ← Xem Thêm Các Dịch Vụ Khác
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Phần đánh giá dịch vụ -->
+      
       <div class="mt-5">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-          <h4 class="fw-bold mb-4">⭐ Đánh Giá Từ Khách Hàng</h4>
-          <div th:if="${reviews.empty}" class="text-muted py-3">Chưa có đánh giá nào cho dịch vụ này.</div>
-          <div th:unless="${reviews.empty}">
-            <div th:each="r : ${reviews}" class="border-bottom py-3">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <strong th:text="${r.userFullName}"></strong>
-                <span class="text-warning">
-                  <span th:each="i : ${#numbers.sequence(1, r.rating)}">★</span>
-                </span>
+        <div class="panel p-4 p-md-5">
+          <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div>
+              <h4 class="fw-bold mb-1">⭐ Đánh Giá Thực Tế Từ Khách Hàng</h4>
+              <p class="text-muted small mb-0">Cảm nhận từ những ba mẹ đã cho bé trải nghiệm gói dịch vụ này</p>
+            </div>
+            <a th:href="@{/bookings/create(serviceId=${service.id})}" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+              Đặt lịch để trải nghiệm
+            </a>
+          </div>
+
+          <div th:if="${reviews.empty}" class="text-center py-4 bg-light rounded-4">
+            <div class="fs-2 mb-1">🐾</div>
+            <p class="text-muted mb-0">Chưa có đánh giá nào cho dịch vụ này. Hãy là người đầu tiên trải nghiệm nhé!</p>
+          </div>
+
+          <div th:unless="${reviews.empty}" class="row g-3">
+            <div th:each="r : ${reviews}" class="col-md-6">
+              <div class="p-3 rounded-4 border bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="user-avatar-mini">🐾</span>
+                    <strong class="text-dark" th:text="${r.userFullName}"></strong>
+                  </div>
+                  <span class="text-warning">
+                    <span th:each="i : ${#numbers.sequence(1, r.rating)}">★</span>
+                  </span>
+                </div>
+                <p class="mb-2 text-secondary small" th:text="${r.comment}"></p>
+                <span class="small text-muted" th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
               </div>
-              <p class="mb-1 text-secondary" th:text="${r.comment}"></p>
-              <span class="small text-muted" th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>

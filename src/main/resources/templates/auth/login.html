@@ -1,40 +1,64 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Đăng nhập')}"></head>
+  <head th:replace="~{fragments/header :: head('Đăng Nhập Tài Khoản')}"></head>
   <body>
-    <nav th:replace="~{fragments/navbar :: nav}"></nav>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
+
     <main class="container py-5" style="max-width: 520px">
-      <div class="panel p-4">
-        <h1 class="h3 fw-bold">Chào mừng trở lại</h1>
-        <p class="text-muted">Đăng nhập để lưu giỏ hàng và theo dõi đơn.</p>
-        <div class="alert alert-danger" th:if="${param.error}">
-          Email hoặc mật khẩu chưa đúng.
+      <div class="panel p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="brand-icon-box mx-auto mb-3" style="width: 54px; height: 54px; font-size: 1.6rem;">
+            <span>🐾</span>
+          </div>
+          <h1 class="h3 fw-bold mb-1 text-dark">Chào Mừng Trở Lại!</h1>
+          <p class="text-secondary small mb-0">Đăng nhập để theo dõi lịch spa và quản lý đơn hàng của bé</p>
         </div>
-        <div class="alert alert-success" th:if="${param.logout}">
-          Bạn đã đăng xuất.
+
+        
+        <div class="alert alert-danger rounded-4 small p-3 mb-3" th:if="${param.error}">
+          <i class="bi bi-exclamation-circle-fill me-1"></i> Email hoặc mật khẩu không chính xác.
         </div>
+        <div class="alert alert-success rounded-4 small p-3 mb-3" th:if="${param.logout}">
+          <i class="bi bi-check-circle-fill me-1"></i> Bạn đã đăng xuất thành công.
+        </div>
+
         <form th:action="@{/login}" method="post">
-          <label class="form-label">Email</label
-          ><input
-            class="form-control mb-3"
-            type="email"
-            name="username"
-            required
-            autofocus
-          /><label class="form-label">Mật khẩu</label
-          ><input
-            class="form-control mb-4"
-            type="password"
-            name="password"
-            required
-          /><button class="btn btn-primary w-100">Đăng nhập</button>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email đăng nhập</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-envelope text-muted"></i></span>
+              <input class="form-control border-start-0" type="email" name="username" required autofocus placeholder="name@example.com" />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label class="form-label small fw-semibold mb-0">Mật khẩu</label>
+              <a href="#" class="small text-primary text-decoration-none">Quên mật khẩu?</a>
+            </div>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-lock text-muted"></i></span>
+              <input class="form-control border-start-0" type="password" name="password" required placeholder="••••••••" />
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm mb-3">
+            Đăng Nhập Ngay 🐾
+          </button>
         </form>
-        <hr />
-        <p class="small mb-0">
-          Tài khoản demo: <code>customer@utepet.vn</code> /
-          <code>Password@123</code>
-        </p>
+
+        <div class="text-center pt-2 border-top">
+          <span class="small text-muted">Chưa có tài khoản? </span>
+          <a th:href="@{/register}" class="small fw-bold text-primary text-decoration-none">Đăng ký thành viên mới</a>
+        </div>
+
+        <div class="p-3 bg-light rounded-4 mt-4 small text-muted">
+          <div class="fw-semibold text-dark mb-1"><i class="bi bi-info-circle me-1"></i> Tài khoản Demo:</div>
+          <div>Khách hàng: <code>customer@utepet.vn</code> / <code>Password@123</code></div>
+        </div>
       </div>
     </main>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>

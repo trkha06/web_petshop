@@ -1,4 +1,3 @@
-// File: src/main/resources/templates/manager/slots/list.html
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
   <head th:replace="~{fragments/header :: head('Quản lý Khung giờ Slot')}"></head>
@@ -16,7 +15,7 @@
         </button>
       </div>
 
-      <!-- Flash Messages -->
+      
       <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -26,7 +25,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
       </div>
 
-      <!-- Bộ lọc Chi nhánh và Ngày -->
+      
       <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white">
         <form th:action="@{/manager/slots}" method="get" class="row g-3 align-items-end">
           <div class="col-md-5">
@@ -46,7 +45,7 @@
         </form>
       </div>
 
-      <!-- Bảng danh sách Slot -->
+      
       <div class="card border-0 shadow-sm rounded-4 overflow-hidden" th:if="${slots}">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
@@ -84,7 +83,7 @@
       </div>
     </div>
 
-    <!-- Modal Tự Động Sinh Slot Hàng Loạt -->
+    
     <div class="modal fade" id="generateModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">

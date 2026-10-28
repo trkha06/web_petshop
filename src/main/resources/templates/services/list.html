@@ -1,47 +1,93 @@
-// File: src/main/resources/templates/services/list.html
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-  <head th:replace="~{fragments/header :: head('Dịch vụ chăm sóc thú cưng')}"></head>
-  <body class="bg-light">
-    <div th:replace="~{fragments/navbar :: nav}"></div>
+  <head th:replace="~{fragments/header :: head('Bảng Giá Dịch Vụ Spa & Chăm Sóc Thú Cưng')}"></head>
+  <body>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
 
-    <div class="container my-5">
-      <div class="text-center mb-5">
-        <h2 class="fw-bold text-primary">✨ Dịch Vụ Chăm Sóc & Làm Đẹp Thú Cưng</h2>
-        <p class="text-muted">Đội ngũ kỹ thuật viên chuyên nghiệp, yêu thương động vật và trang thiết bị hiện đại</p>
+    <main class="container py-5">
+      
+      <div class="hero-pet-wrapper p-4 p-md-5 mb-5 text-center">
+        <span class="badge hero-pet-badge rounded-pill px-3 py-2 mb-3 d-inline-flex align-items-center gap-1 shadow-sm">
+          <i class="bi bi-stars text-warning"></i> Bảng Giá & Menu Spa Cao Cấp
+        </span>
+        <h1 class="display-6 fw-bold mb-3">Dịch Vụ Chăm Sóc & Làm Đẹp Cho Bé Cưng</h1>
+        <p class="text-secondary mx-auto mb-4" style="max-width: 680px;">
+          Đội ngũ kỹ thuật viên chuyên nghiệp được đào tạo bài bản theo giáo trình quốc tế, phòng spa vô trùng khép kín và trang thiết bị hiện đại hàng đầu.
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+          <a th:href="@{/bookings/create}" class="btn btn-cta-book rounded-pill px-4 py-2 fw-bold">
+            <i class="bi bi-calendar2-heart-fill me-1"></i> Đặt Lịch Hẹn Ngay
+          </a>
+          <a th:href="@{/products#shop}" class="btn btn-outline-primary rounded-pill px-4 py-2">
+            <i class="bi bi-bag-check me-1"></i> Ghé Cửa Hàng
+          </a>
+        </div>
       </div>
 
-      <div th:if="${services.empty}" class="card border-0 shadow-sm p-5 text-center">
-        <h5 class="text-muted">Hiện chưa có gói dịch vụ nào hoạt động</h5>
+      
+      <div th:if="${services.empty}" class="panel p-5 text-center my-4">
+        <div class="fs-1 mb-2">🐾</div>
+        <h5 class="fw-bold text-muted">Hiện chưa có gói dịch vụ nào hoạt động</h5>
+        <p class="text-secondary small">Vui lòng quay lại sau hoặc liên hệ hotline 1900 6868 để được hỗ trợ.</p>
       </div>
 
+      
       <div th:unless="${services.empty}" class="row g-4">
         <div th:each="s : ${services}" class="col-md-6 col-lg-4">
-          <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100 d-flex flex-column">
-            <img th:src="${s.imageUrl != null ? s.imageUrl : 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80'}" 
-                 class="card-img-top" style="height: 220px; object-fit: cover;" th:alt="${s.name}">
-            <div class="card-body d-flex flex-column">
+          <article class="service-showcase-card h-100">
+            <div class="service-card-img-wrap">
+              <img th:src="${s.imageUrl != null ? s.imageUrl : 'https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?auto=format&fit=crop&w=800&q=80'}" 
+                   th:alt="${s.name}">
+              <span class="service-floating-badge" th:if="${s.petType}" th:text="|Dành cho: ${s.petType}|"></span>
+              <span class="service-duration-badge" th:if="${s.durationMinutes}">
+                <i class="bi bi-clock me-1"></i> <span th:text="${s.durationMinutes} + ' phút'"></span>
+              </span>
+            </div>
+
+            <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="card-title fw-bold text-dark mb-0" th:text="${s.name}"></h5>
-                <span class="badge bg-info text-dark" th:if="${s.petType}" th:text="${s.petType}"></span>
+                <h4 class="h5 fw-bold text-dark mb-0" th:text="${s.name}"></h4>
               </div>
-              <p class="text-muted small flex-grow-1" th:text="${s.description}"></p>
+              <p class="text-muted small flex-grow-1 mb-3" style="min-height: 48px;" th:text="${s.description}"></p>
               
               <div class="d-flex justify-content-between align-items-center my-3 py-2 border-top border-bottom">
-                <div>⏱️ <span class="small text-muted" th:text="${s.durationMinutes} + ' phút'"></span></div>
-                <div class="fs-5 fw-bold text-danger" th:text="${#numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT')} + 'đ'"></div>
+                <div class="small text-muted">
+                  <i class="bi bi-shield-check text-success me-1"></i> Tiêu chuẩn 5 sao
+                </div>
+                <div class="price" th:text="${#numbers.formatDecimal(s.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
               </div>
 
-              <div class="d-flex gap-2">
-                <a th:href="@{'/services/' + ${s.id}}" class="btn btn-outline-secondary w-50">Chi tiết</a>
-                <a th:href="@{'/bookings/create?serviceId=' + ${s.id}}" class="btn btn-primary w-50 fw-semibold">Đặt lịch ngay</a>
+              <div class="d-flex gap-2 pt-1">
+                <a th:href="@{'/services/' + ${s.id}}" class="btn btn-outline-secondary rounded-pill w-50 py-2">Xem chi tiết</a>
+                <a th:href="@{'/bookings/create?serviceId=' + ${s.id}}" class="btn btn-primary rounded-pill w-50 py-2 fw-bold">Đặt lịch</a>
               </div>
             </div>
+          </article>
+        </div>
+      </div>
+
+      
+      <div class="panel p-4 p-md-5 mt-5">
+        <div class="row g-4 text-center">
+          <div class="col-md-4">
+            <div class="fs-1 text-primary mb-2">🌿</div>
+            <h5 class="fw-bold mb-1">Dược Mỹ Phẩm Hữu Cơ</h5>
+            <p class="text-muted small mb-0">100% thảo mộc organic, nuôi dưỡng lông da và an toàn cho mắt của bé cưng.</p>
+          </div>
+          <div class="col-md-4">
+            <div class="fs-1 text-warning mb-2">🚿</div>
+            <h5 class="fw-bold mb-1">Vô Trùng & Tiệt Trùng UV</h5>
+            <p class="text-muted small mb-0">Dụng cụ cắt tỉa và bồn ngâm được khử trùng tiệt đối sau mỗi lượt làm việc.</p>
+          </div>
+          <div class="col-md-4">
+            <div class="fs-1 text-success mb-2">❤️</div>
+            <h5 class="fw-bold mb-1">Tình Yêu Thương Vô Điều Kiện</h5>
+            <p class="text-muted small mb-0">Tuyệt đối không gây mê, không đánh mắng bé, chăm sóc bằng sự kiên nhẫn và nâng niu.</p>
           </div>
         </div>
       </div>
-    </div>
+    </main>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
   </body>
 </html>
