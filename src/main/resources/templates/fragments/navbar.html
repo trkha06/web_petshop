@@ -274,8 +274,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-      initRealtimeNotifications();
-      loadInitialNotifications();
+      if (document.getElementById('notif-badge')) {
+        initRealtimeNotifications();
+        loadInitialNotifications();
+      }
     });
   </script>
 </header>

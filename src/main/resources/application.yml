@@ -11,6 +11,18 @@ spring:
     open-in-view: false
   thymeleaf:
     cache: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: khangdinh.23062006@gmail.com
+    password: nroftjlriwdlxfoo
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 server:
   error:
     include-message: always

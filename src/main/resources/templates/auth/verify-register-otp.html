@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments/header :: head('Xác Thực OTP Đăng Ký')}"></head>
+  <body>
+    <header th:replace="~{fragments/navbar :: nav}"></header>
+
+    <main class="container py-5" style="max-width: 520px">
+      <div class="panel p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="brand-icon-box mx-auto mb-3" style="width: 58px; height: 58px; font-size: 1.7rem;">
+            <span>📩</span>
+          </div>
+          <span class="badge bg-primary-subtle text-primary fw-bold rounded-pill px-3 py-1 mb-2">Bước 2: Xác thực tài khoản</span>
+          <h1 class="h4 fw-bold mb-1 text-dark">Nhập Mã OTP</h1>
+          <p class="text-secondary small mb-0">
+            Mã xác thực gồm 6 chữ số đã được gửi tới email: <br>
+            <strong class="text-primary" th:text="${email}">user@example.com</strong>
+          </p>
+        </div>
+
+        <div class="alert alert-danger rounded-4 small p-3 mb-3" th:if="${error}" th:text="${error}"></div>
+        <div class="alert alert-success rounded-4 small p-3 mb-3" th:if="${success}" th:text="${success}"></div>
+
+        <form th:action="@{/register/verify-otp}" method="post">
+          <input type="hidden" name="email" th:value="${email}" />
+
+          <div class="mb-4 text-center">
+            <label class="form-label small fw-semibold text-secondary mb-2">Mã xác thực 6 chữ số</label>
+            <input class="form-control form-control-lg text-center font-monospace fw-bold fs-2" 
+                   style="letter-spacing: 10px; border-radius: 16px;"
+                   type="text" 
+                   name="otp" 
+                   maxlength="6" 
+                   pattern="[0-9]{6}"
+                   inputmode="numeric"
+                   required 
+                   autofocus 
+                   placeholder="••••••" />
+            <div class="form-text small text-muted mt-2">Mã OTP có hiệu lực trong 5 phút. Vui lòng kiểm tra cả thư mục Spam/Rác.</div>
+          </div>
+
+          <button class="btn btn-primary btn-lg w-100 fw-bold rounded-pill shadow-sm mb-3">
+            Xác Nhận & Hoàn Tất Đăng Ký 🐾
+          </button>
+        </form>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top small">
+          <a th:href="@{/register}" class="text-secondary text-decoration-none">
+            <i class="bi bi-arrow-left me-1"></i> Đổi email khác
+          </a>
+          <form th:action="@{/register/resend-otp}" method="post" class="d-inline">
+            <input type="hidden" name="email" th:value="${email}" />
+            <button type="submit" class="btn btn-link btn-sm p-0 text-primary text-decoration-none fw-semibold">
+              <i class="bi bi-arrow-clockwise me-1"></i> Gửi lại mã OTP
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+
+    <footer th:replace="~{fragments/footer :: footer}"></footer>
+  </body>
+</html>

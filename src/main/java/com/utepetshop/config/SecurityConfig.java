@@ -8,10 +8,11 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.*;
+import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.access.AccessDeniedHandlerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
@@ -26,12 +27,17 @@ public class SecurityConfig {
   SecurityFilterChain chain(HttpSecurity http, JwtAuthFilter jwt) throws Exception {
     AccessDeniedHandlerImpl denied = new AccessDeniedHandlerImpl();
     denied.setErrorPage("/access-denied");
+
+    HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+    requestCache.setRequestMatcher(new NegatedRequestMatcher(new AntPathRequestMatcher("/api/**")));
+
     return http.csrf(c -> c.ignoringRequestMatchers("/api/**"))
+        .requestCache(rc -> rc.requestCache(requestCache))
         .exceptionHandling(
             e ->
                 e.defaultAuthenticationEntryPointFor(
-                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                    new AntPathRequestMatcher("/api/**"))
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        new AntPathRequestMatcher("/api/**"))
                     .defaultAuthenticationEntryPointFor(
                         new LoginUrlAuthenticationEntryPoint("/login"),
                         new NegatedRequestMatcher(new AntPathRequestMatcher("/api/**")))
@@ -43,7 +49,8 @@ public class SecurityConfig {
                         "/products/**",
                         "/services/**",
                         "/login",
-                        "/register",
+                        "/register/**",
+                        "/forgot-password/**",
                         "/css/**",
                         "/js/**",
                         "/images/**",
@@ -63,7 +70,31 @@ public class SecurityConfig {
                     .authenticated()
                     .anyRequest()
                     .authenticated())
-        .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/products").permitAll())
+        .formLogin(
+            f ->
+                f.loginPage("/login")
+                    .successHandler(
+                        (request, response, authentication) -> {
+                          var savedRequest = requestCache.getRequest(request, response);
+                          if (savedRequest != null
+                              && savedRequest.getRedirectUrl() != null
+                              && !savedRequest.getRedirectUrl().contains("/api/")) {
+                            response.sendRedirect(savedRequest.getRedirectUrl());
+                            return;
+                          }
+                          boolean isManagerOrAdmin =
+                              authentication.getAuthorities().stream()
+                                  .anyMatch(
+                                      auth ->
+                                          auth.getAuthority().equals("ROLE_ADMIN")
+                                              || auth.getAuthority().equals("ROLE_MANAGER"));
+                          if (isManagerOrAdmin) {
+                            response.sendRedirect("/manager/dashboard");
+                          } else {
+                            response.sendRedirect("/products");
+                          }
+                        })
+                    .permitAll())
         .logout(l -> l.logoutSuccessUrl("/products"))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
         .addFilterBefore(jwt, UsernamePasswordAuthenticationFilter.class)
