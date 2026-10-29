@@ -1,6 +1,7 @@
 package com.utepetshop.controller.api;
 
 import com.utepetshop.dto.CheckoutRequest;
+import com.utepetshop.dto.OrderResponse;
 import com.utepetshop.entity.CustomerOrder;
 import com.utepetshop.repository.OrderRepository;
 import com.utepetshop.service.*;
@@ -23,13 +24,16 @@ public class OrderApiController {
   }
 
   @GetMapping
-  public List<CustomerOrder> list() {
-    return orders.findByCustomerIdOrderByCreatedAtDesc(current.required().getId());
+  public List<OrderResponse> list() {
+    return orders.findByCustomerIdOrderByCreatedAtDesc(current.required().getId()).stream()
+        .map(OrderResponse::fromEntity)
+        .toList();
   }
 
   @PostMapping
-  public ResponseEntity<CustomerOrder> checkout(@Valid @RequestBody CheckoutRequest req) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(store.checkout(current.required(), req));
+  public ResponseEntity<OrderResponse> checkout(@Valid @RequestBody CheckoutRequest req) {
+    CustomerOrder order = store.checkout(current.required(), req);
+    return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.fromEntity(order));
   }
 
   @PostMapping("/{id}/cancel")

@@ -1,8 +1,12 @@
 package com.utepetshop.controller.api;
 
-import com.utepetshop.entity.*;
+import com.utepetshop.dto.AddressRequest;
+import com.utepetshop.dto.AddressResponse;
+import com.utepetshop.entity.Address;
+import com.utepetshop.entity.User;
 import com.utepetshop.repository.*;
 import com.utepetshop.service.CurrentUser;
+import jakarta.validation.Valid;
 import java.util.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -24,20 +28,30 @@ public class AccountApiController {
   }
 
   @GetMapping("/addresses")
-  List<Address> addresses() {
-    return addresses.findByUserIdOrderByDefaultAddressDesc(current.required().getId());
+  List<AddressResponse> addresses() {
+    return addresses.findByUserIdOrderByDefaultAddressDesc(current.required().getId()).stream()
+        .map(AddressResponse::fromEntity)
+        .toList();
   }
 
   @PostMapping("/addresses")
-  Address create(@RequestBody Address address) {
+  AddressResponse create(@Valid @RequestBody AddressRequest request) {
     User u = current.required();
-    address.setId(null);
+    Address address = new Address();
     address.setUser(u);
-    if (address.isDefaultAddress())
-      addresses
-          .findByUserIdOrderByDefaultAddressDesc(u.getId())
-          .forEach(a -> a.setDefaultAddress(false));
-    return addresses.save(address);
+    address.setRecipientName(request.recipientName().trim());
+    address.setPhone(request.phone().trim());
+    address.setLine1(request.line1().trim());
+    address.setWard(normalize(request.ward()));
+    address.setDistrict(normalize(request.district()));
+    address.setCity(normalize(request.city()));
+    address.setDefaultAddress(request.defaultAddress());
+    if (request.defaultAddress()) {
+      List<Address> existing = addresses.findByUserIdOrderByDefaultAddressDesc(u.getId());
+      existing.forEach(item -> item.setDefaultAddress(false));
+      addresses.saveAll(existing);
+    }
+    return AddressResponse.fromEntity(addresses.save(address));
   }
 
   @PostMapping("/change-password")
@@ -51,5 +65,9 @@ public class AccountApiController {
     u.setPassword(encoder.encode(next));
     users.save(u);
     return Map.of("message", "Đã đổi mật khẩu");
+  }
+
+  private String normalize(String value) {
+    return value == null || value.isBlank() ? null : value.trim();
   }
 }

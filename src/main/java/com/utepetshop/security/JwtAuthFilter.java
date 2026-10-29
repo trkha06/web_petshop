@@ -29,9 +29,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String email = jwt.email(header.substring(7));
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
           UserDetails u = details.loadUserByUsername(email);
-          SecurityContextHolder.getContext()
-              .setAuthentication(
-                  new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+          if (u.isEnabled()
+              && u.isAccountNonExpired()
+              && u.isAccountNonLocked()
+              && u.isCredentialsNonExpired()) {
+            SecurityContextHolder.getContext()
+                .setAuthentication(
+                    new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities()));
+          }
         }
       } catch (JwtException | IllegalArgumentException ignored) {
       }

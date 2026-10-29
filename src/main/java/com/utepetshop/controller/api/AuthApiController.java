@@ -4,6 +4,7 @@ import com.utepetshop.dto.*;
 import com.utepetshop.entity.*;
 import com.utepetshop.repository.*;
 import com.utepetshop.security.JwtService;
+import com.utepetshop.service.OtpService;
 import jakarta.validation.Valid;
 import java.util.*;
 import org.springframework.http.*;
@@ -20,19 +21,22 @@ public class AuthApiController {
   private final UserRepository users;
   private final RoleRepository roles;
   private final PasswordEncoder encoder;
+  private final OtpService otpService;
 
   public AuthApiController(
       AuthenticationConfiguration c,
       JwtService jwt,
       UserRepository users,
       RoleRepository roles,
-      PasswordEncoder encoder)
+      PasswordEncoder encoder,
+      OtpService otpService)
       throws Exception {
     this.auth = c.getAuthenticationManager();
     this.jwt = jwt;
     this.users = users;
     this.roles = roles;
     this.encoder = encoder;
+    this.otpService = otpService;
   }
 
   @PostMapping("/login")
@@ -50,12 +54,31 @@ public class AuthApiController {
 
   @PostMapping("/register")
   ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
-    if (users.findByEmail(req.email()).isPresent())
+    String email = req.email().toLowerCase().trim();
+    if (users.findByEmail(email).isPresent())
       return ResponseEntity.badRequest().body(Map.of("message", "Email đã được sử dụng"));
+
+    otpService.createAndSendRegistrationOtp(req.fullName().trim(), email, req.password());
+    return ResponseEntity.accepted()
+        .body(Map.of("message", "Mã OTP đã được gửi đến email đăng ký"));
+  }
+
+  @PostMapping("/register/verify")
+  ResponseEntity<?> verifyRegistration(@Valid @RequestBody RegistrationOtpRequest req) {
+    OtpService.PendingRegistration pending =
+        otpService.verifyRegistrationOtp(req.email(), req.otp());
+    if (pending == null) {
+      return ResponseEntity.badRequest()
+          .body(Map.of("message", "Mã OTP không đúng, đã hết hạn hoặc vượt quá số lần thử"));
+    }
+    if (users.findByEmail(pending.email()).isPresent()) {
+      return ResponseEntity.badRequest().body(Map.of("message", "Email đã được sử dụng"));
+    }
+
     User u = new User();
-    u.setFullName(req.fullName());
-    u.setEmail(req.email());
-    u.setPassword(encoder.encode(req.password()));
+    u.setFullName(pending.fullName());
+    u.setEmail(pending.email());
+    u.setPassword(encoder.encode(pending.password()));
     u.getRoles().add(roles.findByName(RoleName.CUSTOMER).orElseThrow());
     users.save(u);
     return ResponseEntity.status(HttpStatus.CREATED)

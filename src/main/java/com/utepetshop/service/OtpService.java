@@ -8,13 +8,20 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OtpService {
+  private static final int MAX_FAILED_ATTEMPTS = 5;
   private final EmailService emailService;
   private final SecureRandom random = new SecureRandom();
 
   public record PendingRegistration(
-      String otp, String fullName, String email, String password, Instant expiry) {}
+      String otp,
+      String fullName,
+      String email,
+      String password,
+      Instant expiry,
+      int failedAttempts) {}
 
-  public record PendingPasswordReset(String otp, String email, Instant expiry) {}
+  public record PendingPasswordReset(
+      String otp, String email, Instant expiry, int failedAttempts) {}
 
   private final Map<String, PendingRegistration> registrations = new ConcurrentHashMap<>();
   private final Map<String, PendingPasswordReset> passwordResets = new ConcurrentHashMap<>();
@@ -34,7 +41,7 @@ public class OtpService {
     registrations.put(
         email.toLowerCase().trim(),
         new PendingRegistration(
-            otp, fullName, email.toLowerCase().trim(), password, expiry));
+            otp, fullName, email.toLowerCase().trim(), password, expiry, 0));
     emailService.sendOtpEmail(email.toLowerCase().trim(), otp, "REGISTER");
   }
 
@@ -55,6 +62,20 @@ public class OtpService {
       return null;
     }
     if (!pending.otp().equals(otp.trim())) {
+      int failedAttempts = pending.failedAttempts() + 1;
+      if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+        registrations.remove(key);
+      } else {
+        registrations.put(
+            key,
+            new PendingRegistration(
+                pending.otp(),
+                pending.fullName(),
+                pending.email(),
+                pending.password(),
+                pending.expiry(),
+                failedAttempts));
+      }
       return null;
     }
     registrations.remove(key);
@@ -71,7 +92,7 @@ public class OtpService {
       registrations.put(
           key,
           new PendingRegistration(
-              newOtp, pending.fullName(), pending.email(), pending.password(), expiry));
+              newOtp, pending.fullName(), pending.email(), pending.password(), expiry, 0));
       emailService.sendOtpEmail(key, newOtp, "REGISTER");
     }
   }
@@ -81,7 +102,7 @@ public class OtpService {
     Instant expiry = Instant.now().plusSeconds(300);
     passwordResets.put(
         email.toLowerCase().trim(),
-        new PendingPasswordReset(otp, email.toLowerCase().trim(), expiry));
+        new PendingPasswordReset(otp, email.toLowerCase().trim(), expiry, 0));
     emailService.sendOtpEmail(email.toLowerCase().trim(), otp, "RESET");
   }
 
@@ -97,6 +118,15 @@ public class OtpService {
       return false;
     }
     if (!pending.otp().equals(otp.trim())) {
+      int failedAttempts = pending.failedAttempts() + 1;
+      if (failedAttempts >= MAX_FAILED_ATTEMPTS) {
+        passwordResets.remove(key);
+      } else {
+        passwordResets.put(
+            key,
+            new PendingPasswordReset(
+                pending.otp(), pending.email(), pending.expiry(), failedAttempts));
+      }
       return false;
     }
     passwordResets.remove(key);

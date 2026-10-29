@@ -274,7 +274,11 @@ public class StoreService {
             Set.of(OrderStatus.COMPLETED));
     if (!allowed.getOrDefault(order.getStatus(), Set.of()).contains(next))
       throw new IllegalArgumentException("Không thể chuyển trạng thái đơn hàng theo cách này");
-    order.setStatus(next);
+    if (next == OrderStatus.CANCELLED) {
+      restockAndCancel(order);
+    } else {
+      order.setStatus(next);
+    }
     CustomerOrder updated = orders.save(order);
     if (eventPublisher != null) {
       eventPublisher.publishEvent(

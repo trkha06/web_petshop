@@ -69,9 +69,13 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/api/promotions/apply")
                     .authenticated()
-                    .requestMatchers("/manager/**", "/api/admin/**", "/api/promotions/**")
+                    .requestMatchers(
+                        "/manager/**",
+                        "/api/admin/**",
+                        "/api/manager/**",
+                        "/api/promotions/**")
                     .hasAnyRole("MANAGER", "ADMIN")
-                    .requestMatchers("/staff/**")
+                    .requestMatchers("/staff/**", "/api/staff/**")
                     .hasAnyRole("STAFF", "MANAGER", "ADMIN")
                     .requestMatchers("/cart/**", "/checkout/**", "/orders/**", "/api/orders/**")
                     .authenticated()

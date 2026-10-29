@@ -170,7 +170,13 @@
 
         const div = document.createElement('div');
         div.className = 'p-3 border-bottom small bg-white rounded-3 shadow-sm my-2';
-        div.innerHTML = '<strong class="text-primary d-block mb-1">' + (item.title || 'Thông báo') + '</strong><p class="mb-0 text-muted">' + (item.message || '') + '</p>';
+        const title = document.createElement('strong');
+        title.className = 'text-primary d-block mb-1';
+        title.textContent = item.title || 'Thông báo';
+        const message = document.createElement('p');
+        message.className = 'mb-0 text-muted';
+        message.textContent = item.message || '';
+        div.append(title, message);
         list.prepend(div);
       }
 
@@ -188,11 +194,17 @@
               const empty = document.getElementById('notif-empty');
               if (empty) empty.style.display = 'none';
               const list = document.getElementById('notif-list');
-              list.innerHTML = '';
+              list.replaceChildren();
               data.notifications.slice(0, 5).forEach(n => {
                 const div = document.createElement('div');
                 div.className = 'p-2 border-bottom small ' + (n.read ? 'text-muted' : 'bg-light fw-semibold') + ' rounded-3 my-1';
-                div.innerHTML = '<div class="text-dark">' + n.title + '</div><p class="mb-0 text-muted fw-normal">' + n.message + '</p>';
+                const title = document.createElement('div');
+                title.className = 'text-dark';
+                title.textContent = n.title || 'Thông báo';
+                const message = document.createElement('p');
+                message.className = 'mb-0 text-muted fw-normal';
+                message.textContent = n.message || '';
+                div.append(title, message);
                 list.appendChild(div);
               });
             }
