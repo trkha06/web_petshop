@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 @Configuration
 public class SecurityConfig {
@@ -29,7 +30,11 @@ public class SecurityConfig {
     denied.setErrorPage("/access-denied");
 
     HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
-    requestCache.setRequestMatcher(new NegatedRequestMatcher(new AntPathRequestMatcher("/api/**")));
+    requestCache.setRequestMatcher(new NegatedRequestMatcher(new OrRequestMatcher(
+        new AntPathRequestMatcher("/api/**"),
+        new AntPathRequestMatcher("/favicon.ico"),
+        new AntPathRequestMatcher("/error")
+    )));
 
     return http.csrf(c -> c.ignoringRequestMatchers("/api/**"))
         .requestCache(rc -> rc.requestCache(requestCache))
@@ -55,6 +60,8 @@ public class SecurityConfig {
                         "/js/**",
                         "/images/**",
                         "/ws/**",
+                        "/favicon.ico",
+                        "/error",
                         "/api/auth/**",
                         "/api/products/**",
                         "/api/services/**",
@@ -78,7 +85,9 @@ public class SecurityConfig {
                           var savedRequest = requestCache.getRequest(request, response);
                           if (savedRequest != null
                               && savedRequest.getRedirectUrl() != null
-                              && !savedRequest.getRedirectUrl().contains("/api/")) {
+                              && !savedRequest.getRedirectUrl().contains("/api/")
+                              && !savedRequest.getRedirectUrl().contains("/favicon.ico")
+                              && !savedRequest.getRedirectUrl().contains("/error")) {
                             response.sendRedirect(savedRequest.getRedirectUrl());
                             return;
                           }
