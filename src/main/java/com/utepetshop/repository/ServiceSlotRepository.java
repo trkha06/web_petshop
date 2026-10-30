@@ -30,4 +30,10 @@ public interface ServiceSlotRepository extends JpaRepository<ServiceSlot, Long> 
       Long branchId, Long serviceId, LocalDate slotDate, LocalTime startTime);
 
   List<ServiceSlot> findByBranchIdAndSlotDateOrderByStartTimeAsc(Long branchId, LocalDate slotDate);
+
+  @Query(
+      "SELECT s FROM ServiceSlot s JOIN FETCH s.branch "
+          + "WHERE s.slotDate >= :slotDate AND s.active = true "
+          + "ORDER BY s.slotDate ASC, s.startTime ASC")
+  List<ServiceSlot> findNextActiveSlots(@Param("slotDate") LocalDate slotDate);
 }

@@ -2,10 +2,17 @@ package com.utepetshop.controller.web;
 
 import com.utepetshop.dto.ChatMessageDto;
 import com.utepetshop.dto.ChatRoomDto;
+import com.utepetshop.entity.Branch;
 import com.utepetshop.entity.RoleName;
+import com.utepetshop.entity.ServiceSlot;
 import com.utepetshop.entity.User;
+import com.utepetshop.repository.BranchRepository;
+import com.utepetshop.repository.ServiceRepository;
+import com.utepetshop.repository.ServiceSlotRepository;
 import com.utepetshop.repository.UserRepository;
+import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -23,6 +30,9 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
   private final SimpMessagingTemplate messagingTemplate;
   private final UserRepository userRepository;
+  private final ServiceRepository serviceRepository;
+  private final BranchRepository branchRepository;
+  private final ServiceSlotRepository serviceSlotRepository;
 
   private final Map<String, List<ChatMessageDto>> roomMessages = new ConcurrentHashMap<>();
   private final Map<String, ChatRoomDto> activeRooms = new ConcurrentHashMap<>();
@@ -128,17 +138,10 @@ public class ChatController {
   private String getBotReply(String text) {
     String lower = text.toLowerCase();
     if (lower.contains("bảng giá") || lower.contains("giá spa") || lower.contains("giá") || lower.contains("chi phí") || lower.contains("bao nhiêu tiền") || lower.contains("gói spa")) {
-      return "🐾 Bảng giá dịch vụ Spa tham khảo tại UTEPet:\n"
-          + "• Tắm vệ sinh cơ bản & sấy chải: từ 120.000đ - 250.000đ (theo cân nặng)\n"
-          + "• Cắt tỉa lông tạo kiểu nghệ thuật: từ 200.000đ - 450.000đ\n"
-          + "• Gói Spa dưỡng lông toàn diện + tắm bồn sục O2: từ 350.000đ\n"
-          + "👉 Bạn có thể xem chi tiết ở bảng giá hoặc bấm Đặt Lịch để chọn gói phù hợp nhé!";
+      return buildServicePriceReply();
     }
     if (lower.contains("địa chỉ") || lower.contains("ở đâu") || lower.contains("giờ mở cửa") || lower.contains("giờ đón") || lower.contains("liên hệ") || lower.contains("chi nhánh")) {
-      return "📍 UTEPet Care & Spa rất hân hạnh được đón tiếp bạn và bé tại:\n"
-          + "• Trụ sở chính: 01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh\n"
-          + "• Thời gian đón khách: 08:00 - 21:00 hàng ngày (kể cả Thứ Bảy, Chủ Nhật & Ngày Lễ)\n"
-          + "• Bạn có thể gửi câu hỏi trực tiếp tại khung trò chuyện này.";
+      return buildBranchAndScheduleReply();
     }
     if (lower.contains("đặt lịch") || lower.contains("hẹn") || lower.contains("booking") || lower.contains("cách đặt")) {
       return "📅 Bạn có thể đặt lịch hẹn Spa nhanh chóng qua 3 bước:\n"
@@ -157,6 +160,68 @@ public class ChatController {
       return "🩺 Dạ, em đã chuyển thông báo đến chuyên viên tư vấn UTEPet! Nhân viên trực sẽ đọc tin nhắn và phản hồi trực tiếp với bạn ngay trong giây lát. Bạn vui lòng để lại câu hỏi cụ thể nhé!";
     }
     return null;
+  }
+
+  private String buildServicePriceReply() {
+    List<com.utepetshop.entity.Service> services = serviceRepository.findByActiveTrueOrderByIdAsc();
+    if (services.isEmpty()) {
+      return "🐾 Hiện chưa có dịch vụ đang hoạt động. Bạn vui lòng quay lại sau.";
+    }
+
+    StringBuilder reply = new StringBuilder("🐾 Bảng giá dịch vụ hiện có tại UTEPet:\n");
+    for (com.utepetshop.entity.Service service : services) {
+      reply.append("• ")
+          .append(service.getName())
+          .append(": ")
+          .append(formatPrice(service.getPrice()));
+      if (service.getDurationMinutes() > 0) {
+        reply.append(" · ").append(service.getDurationMinutes()).append(" phút");
+      }
+      reply.append("\n");
+    }
+    reply.append("👉 Bạn có thể chọn dịch vụ và khung giờ phù hợp tại trang Đặt lịch.");
+    return reply.toString();
+  }
+
+  private String buildBranchAndScheduleReply() {
+    List<Branch> branches = branchRepository.findByActiveTrueOrderByNameAsc();
+    StringBuilder reply = new StringBuilder("📍 Các chi nhánh đang hoạt động:\n");
+    if (branches.isEmpty()) {
+      reply.append("• Hiện chưa có chi nhánh đang hoạt động.\n");
+    } else {
+      for (Branch branch : branches) {
+        reply.append("• ")
+            .append(branch.getName())
+            .append(": ")
+            .append(branch.getAddress())
+            .append("\n");
+      }
+    }
+
+    List<ServiceSlot> slots = serviceSlotRepository.findNextActiveSlots(LocalDate.now());
+    if (slots.isEmpty()) {
+      reply.append("🕒 Hiện chưa có khung giờ dịch vụ được mở.");
+    } else {
+      ServiceSlot slot = slots.getFirst();
+      reply.append("🕒 Khung giờ dịch vụ gần nhất: ")
+          .append(slot.getStartTime().format(DateTimeFormatter.ofPattern("HH:mm")))
+          .append(" - ")
+          .append(slot.getEndTime().format(DateTimeFormatter.ofPattern("HH:mm")))
+          .append(" ngày ")
+          .append(slot.getSlotDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+          .append(" tại ")
+          .append(slot.getBranch().getName())
+          .append(".");
+    }
+    return reply.toString();
+  }
+
+  private String formatPrice(BigDecimal price) {
+    if (price == null) {
+      return "Liên hệ";
+    }
+    return java.text.NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN")).format(price)
+        + "đ";
   }
 
   @GetMapping("/api/chat/history")
