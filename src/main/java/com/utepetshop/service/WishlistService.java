@@ -1,4 +1,3 @@
-// File: src/main/java/com/utepetshop/service/WishlistService.java
 package com.utepetshop.service;
 
 import com.utepetshop.dto.ProductResponse;
@@ -12,6 +11,7 @@ import com.utepetshop.repository.WishlistItemRepository;
 import com.utepetshop.repository.WishlistRepository;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,13 +35,21 @@ public class WishlistService {
             .findByUserId(user.getId())
             .orElseGet(() -> wishlistRepository.save(new Wishlist(user)));
 
-    boolean exists = wishlistItemRepository.existsByWishlistIdAndProductId(wishlist.getId(), product.getId());
-    if (exists) {
-      wishlistItemRepository.deleteByWishlistIdAndProductId(wishlist.getId(), product.getId());
-      return false; // Removed
+    Optional<WishlistItem> itemOpt =
+        wishlistItemRepository.findByWishlistIdAndProductId(wishlist.getId(), productId);
+
+    if (itemOpt.isPresent()) {
+      WishlistItem item = itemOpt.get();
+      wishlist.getItems().removeIf(it -> it.getProduct().getId().equals(productId));
+      wishlistItemRepository.delete(item);
+      wishlistItemRepository.flush();
+      return false;
     } else {
-      wishlistItemRepository.save(new WishlistItem(wishlist, product));
-      return true; // Added
+      WishlistItem newItem = new WishlistItem(wishlist, product);
+      wishlist.getItems().add(newItem);
+      wishlistItemRepository.save(newItem);
+      wishlistItemRepository.flush();
+      return true;
     }
   }
 
@@ -51,7 +59,7 @@ public class WishlistService {
         .findByUserId(user.getId())
         .map(
             w ->
-                w.getItems().stream()
+                wishlistItemRepository.findByWishlistId(w.getId()).stream()
                     .map(WishlistItem::getProduct)
                     .map(ProductResponse::of)
                     .toList())
