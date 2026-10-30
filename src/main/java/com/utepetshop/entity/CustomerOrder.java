@@ -31,6 +31,9 @@ public class CustomerOrder {
   @Enumerated(EnumType.STRING)
   private DeliveryType deliveryType = DeliveryType.DELIVERY;
 
+  @Column(name = "checkout_request_key", unique = true, length = 80, updatable = false)
+  private String checkoutRequestKey;
+
   @Column(length = 100)
   private String recipientName;
 

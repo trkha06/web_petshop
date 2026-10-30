@@ -17,6 +17,7 @@
       </div>
 
       <form method="post" th:action="@{/checkout}" class="row g-4">
+        <input type="hidden" name="idempotencyKey" th:value="${checkoutRequestKey}" />
         <div class="col-lg-7">
           
           <div class="panel p-4 p-md-5 mb-4">

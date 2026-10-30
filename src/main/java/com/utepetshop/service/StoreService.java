@@ -78,11 +78,26 @@ public class StoreService {
 
   @Transactional
   public CustomerOrder checkout(User user, CheckoutRequest request) {
+    return checkout(user, request, UUID.randomUUID().toString());
+  }
+
+  @Transactional
+  public CustomerOrder checkout(User user, CheckoutRequest request, String idempotencyKey) {
     validateCheckout(request);
+    String checkoutRequestKey = validateIdempotencyKey(idempotencyKey);
+    CustomerOrder existingOrder = findExistingOrder(checkoutRequestKey, user);
+    if (existingOrder != null) {
+      return existingOrder;
+    }
+
     Cart cart =
         carts
-            .findByUserId(user.getId())
+            .findByUserIdForCheckoutLock(user.getId())
             .orElseThrow(() -> new IllegalArgumentException("Giỏ hàng đang trống"));
+    existingOrder = findExistingOrder(checkoutRequestKey, user);
+    if (existingOrder != null) {
+      return existingOrder;
+    }
     if (cart.getItems().isEmpty()) throw new IllegalArgumentException("Giỏ hàng đang trống");
     Long branchId = cart.getItems().getFirst().getBranch().getId();
     if (cart.getItems().stream().anyMatch(i -> !i.getBranch().getId().equals(branchId)))
@@ -106,6 +121,7 @@ public class StoreService {
     CustomerOrder order = new CustomerOrder();
     order.setCustomer(user);
     order.setBranch(branch);
+    order.setCheckoutRequestKey(checkoutRequestKey);
     order.setPaymentMethod(request.paymentMethod());
     order.setDeliveryType(request.deliveryType());
     order.setRecipientName(request.recipientName().trim());
@@ -138,7 +154,7 @@ public class StoreService {
       order.getItems().add(oi);
     }
 
-    CustomerOrder saved = orders.save(order);
+    CustomerOrder saved = orders.saveAndFlush(order);
     if (discount != null) promotions.usePromotion(discount.getCode());
     cart.getItems().clear();
     carts.save(cart);
@@ -148,6 +164,25 @@ public class StoreService {
               this, saved, "Đơn hàng mới #" + saved.getId() + " đã được tạo"));
     }
     return saved;
+  }
+
+  private CustomerOrder findExistingOrder(String checkoutRequestKey, User user) {
+    CustomerOrder order = orders.findByCheckoutRequestKey(checkoutRequestKey).orElse(null);
+    if (order != null && !order.getCustomer().getId().equals(user.getId())) {
+      throw new IllegalArgumentException("Mã yêu cầu thanh toán không hợp lệ");
+    }
+    return order;
+  }
+
+  private String validateIdempotencyKey(String idempotencyKey) {
+    if (idempotencyKey == null || idempotencyKey.isBlank()) {
+      throw new IllegalArgumentException("Thiếu mã yêu cầu thanh toán");
+    }
+    String value = idempotencyKey.trim();
+    if (value.length() < 16 || value.length() > 80) {
+      throw new IllegalArgumentException("Mã yêu cầu thanh toán không hợp lệ");
+    }
+    return value;
   }
 
   private void validateCheckout(CheckoutRequest request) {

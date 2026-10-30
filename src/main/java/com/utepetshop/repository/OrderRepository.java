@@ -14,6 +14,9 @@ public interface OrderRepository extends JpaRepository<CustomerOrder, Long> {
   @EntityGraph(attributePaths = {"items", "items.product", "branch", "customer"})
   Optional<CustomerOrder> findByIdAndCustomerId(Long id, Long customerId);
 
+  @EntityGraph(attributePaths = {"items", "items.product", "branch", "customer"})
+  Optional<CustomerOrder> findByCheckoutRequestKey(String checkoutRequestKey);
+
   @Query(
       "SELECT COALESCE(SUM(o.totalAmount), 0) FROM CustomerOrder o WHERE o.status = com.utepetshop.entity.OrderStatus.COMPLETED AND o.createdAt >= :since")
   java.math.BigDecimal sumRevenueSince(@org.springframework.data.repository.query.Param("since") java.time.LocalDateTime since);

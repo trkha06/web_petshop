@@ -31,8 +31,10 @@ public class OrderApiController {
   }
 
   @PostMapping
-  public ResponseEntity<OrderResponse> checkout(@Valid @RequestBody CheckoutRequest req) {
-    CustomerOrder order = store.checkout(current.required(), req);
+  public ResponseEntity<OrderResponse> checkout(
+      @Valid @RequestBody CheckoutRequest req,
+      @RequestHeader("Idempotency-Key") String idempotencyKey) {
+    CustomerOrder order = store.checkout(current.required(), req, idempotencyKey);
     return ResponseEntity.status(HttpStatus.CREATED).body(OrderResponse.fromEntity(order));
   }
 

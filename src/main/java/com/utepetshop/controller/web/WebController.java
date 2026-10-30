@@ -201,6 +201,7 @@ public class WebController {
     model.addAttribute("subtotal", subtotal);
     model.addAttribute("defaultAddress", defaultAddress);
     model.addAttribute("defaultShippingAddress", formatAddress(defaultAddress));
+    model.addAttribute("checkoutRequestKey", UUID.randomUUID().toString());
     return "checkout/index";
   }
 
@@ -214,6 +215,7 @@ public class WebController {
       @RequestParam(required = false) String shippingAddress,
       @RequestParam(required = false) String customerNote,
       @RequestParam(required = false) String promotionCode,
+      @RequestParam String idempotencyKey,
       RedirectAttributes ra) {
     CheckoutRequest request =
         new CheckoutRequest(
@@ -226,7 +228,7 @@ public class WebController {
             customerNote,
             promotionCode);
     try {
-      CustomerOrder order = store.checkout(current.required(), request);
+      CustomerOrder order = store.checkout(current.required(), request, idempotencyKey);
       if (request.paymentMethod() == PaymentMethod.ONLINE_PAYMENT) {
         return "redirect:/checkout/online-payment/" + order.getId();
       }
