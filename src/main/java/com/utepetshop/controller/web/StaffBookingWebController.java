@@ -28,22 +28,14 @@ public class StaffBookingWebController {
 
   @GetMapping
   public String listBookings(@RequestParam(required = false) Long branchId, Model model) {
-    User user = currentUser.required();
-    if (branchId == null) {
-      Optional<StaffProfile> profile = staffProfileService.getStaffProfile(user);
-      if (profile.isPresent()) {
-        branchId = profile.get().getBranch().getId();
-      }
-    }
-
     List<BookingResponse> bookings =
-        branchId != null
+        (branchId != null && branchId > 0)
             ? bookingService.getBookingsByBranch(branchId)
             : bookingService.getAllBookings();
 
     model.addAttribute("bookings", bookings);
     model.addAttribute("branches", branchRepository.findAll());
-    model.addAttribute("selectedBranchId", branchId);
+    model.addAttribute("selectedBranchId", branchId != null ? branchId : 0L);
     model.addAttribute("statuses", BookingStatus.values());
     return "staff/bookings";
   }

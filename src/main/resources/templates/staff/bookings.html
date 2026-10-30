@@ -13,7 +13,7 @@
         <div>
           <form th:action="@{/staff/bookings}" method="get" class="d-flex gap-2">
             <select name="branchId" class="form-select" onchange="this.form.submit()">
-              <option value="">-- Tất cả chi nhánh --</option>
+              <option value="0" th:selected="${selectedBranchId == null or selectedBranchId == 0}">-- Tất cả chi nhánh --</option>
               <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}" th:selected="${selectedBranchId == b.id}"></option>
             </select>
           </form>
