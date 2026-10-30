@@ -134,11 +134,11 @@ public class ChatController {
           + "• Gói Spa dưỡng lông toàn diện + tắm bồn sục O2: từ 350.000đ\n"
           + "👉 Bạn có thể xem chi tiết ở bảng giá hoặc bấm Đặt Lịch để chọn gói phù hợp nhé!";
     }
-    if (lower.contains("địa chỉ") || lower.contains("ở đâu") || lower.contains("giờ mở cửa") || lower.contains("giờ đón") || lower.contains("hotline") || lower.contains("liên hệ") || lower.contains("chi nhánh")) {
+    if (lower.contains("địa chỉ") || lower.contains("ở đâu") || lower.contains("giờ mở cửa") || lower.contains("giờ đón") || lower.contains("liên hệ") || lower.contains("chi nhánh")) {
       return "📍 UTEPet Care & Spa rất hân hạnh được đón tiếp bạn và bé tại:\n"
           + "• Trụ sở chính: 01 Võ Văn Ngân, P. Linh Chiểu, TP. Thủ Đức, TP. Hồ Chí Minh\n"
           + "• Thời gian đón khách: 08:00 - 21:00 hàng ngày (kể cả Thứ Bảy, Chủ Nhật & Ngày Lễ)\n"
-          + "• Hotline hỗ trợ 24/7: 1900 6868 · 0938 199 727";
+          + "• Bạn có thể gửi câu hỏi trực tiếp tại khung trò chuyện này.";
     }
     if (lower.contains("đặt lịch") || lower.contains("hẹn") || lower.contains("booking") || lower.contains("cách đặt")) {
       return "📅 Bạn có thể đặt lịch hẹn Spa nhanh chóng qua 3 bước:\n"
@@ -151,7 +151,7 @@ public class ChatController {
       return "📋 Chính sách lịch hẹn tại UTEPet:\n"
           + "• Đổi khung giờ: Miễn phí trước 2 tiếng so với giờ hẹn\n"
           + "• Hủy lịch: Bạn có thể vào mục 'Lịch hẹn đã đặt' trong tài khoản để hủy mà không mất phí\n"
-          + "• Đón bé trễ: Vui lòng gọi hotline 1900 6868 để nhân viên giữ chỗ cho bé chu đáo.";
+          + "• Đón bé trễ: Vui lòng gửi tin nhắn tại khung trò chuyện để nhân viên hỗ trợ giữ chỗ.";
     }
     if (lower.contains("nhân viên") || lower.contains("gặp nhân viên") || lower.contains("tư vấn viên") || lower.contains("người thật") || lower.contains("staff")) {
       return "🩺 Dạ, em đã chuyển thông báo đến chuyên viên tư vấn UTEPet! Nhân viên trực sẽ đọc tin nhắn và phản hồi trực tiếp với bạn ngay trong giây lát. Bạn vui lòng để lại câu hỏi cụ thể nhé!";

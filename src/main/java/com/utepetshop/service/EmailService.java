@@ -72,7 +72,7 @@ public class EmailService {
                 Luu y an toan: Tuyet doi khong cung cap ma OTP nay cho bat ky ai de dam bao an toan cho tai khoan cua ban.
               </div>
               <div class="footer">
-                UTEPet Shop & Care - He Thong Spa Thu Cung 5 Sao - Hotline: 1900 6868
+                UTEPet Shop & Care - He Thong Spa Thu Cung 5 Sao
               </div>
             </div>
           </body>
