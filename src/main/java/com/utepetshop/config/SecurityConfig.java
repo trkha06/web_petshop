@@ -62,6 +62,7 @@ public class SecurityConfig {
                         "/ws/**",
                         "/favicon.ico",
                         "/error",
+                        "/api/chat/**",
                         "/api/auth/**",
                         "/api/products/**",
                         "/api/services/**",
