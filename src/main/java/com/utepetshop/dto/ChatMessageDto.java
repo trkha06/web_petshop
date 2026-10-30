@@ -17,11 +17,13 @@ public class ChatMessageDto {
   private String content;
   private String time;
   private boolean staff;
+  private boolean bot;
 
   public static ChatMessageDto of(String roomId, String senderName, String senderEmail, String senderRole, String content) {
     boolean isStaff = "STAFF".equalsIgnoreCase(senderRole) 
         || "MANAGER".equalsIgnoreCase(senderRole) 
         || "ADMIN".equalsIgnoreCase(senderRole);
+    boolean isBot = "BOT".equalsIgnoreCase(senderRole);
     return ChatMessageDto.builder()
         .roomId(roomId)
         .senderName(senderName)
@@ -30,6 +32,7 @@ public class ChatMessageDto {
         .content(content)
         .time(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
         .staff(isStaff)
+        .bot(isBot)
         .build();
   }
 }
