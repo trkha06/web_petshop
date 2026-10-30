@@ -59,15 +59,15 @@ public class SecurityConfig {
                         "/css/**",
                         "/js/**",
                         "/images/**",
-                        "/ws/**",
                         "/favicon.ico",
                         "/error",
-                        "/api/chat/**",
                         "/api/auth/**",
                         "/api/products/**",
                         "/api/services/**",
                         "/api/branches/**")
                     .permitAll()
+                    .requestMatchers("/api/chat/**")
+                    .authenticated()
                     .requestMatchers("/api/promotions/apply")
                     .authenticated()
                     .requestMatchers(

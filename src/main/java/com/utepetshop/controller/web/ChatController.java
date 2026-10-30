@@ -3,22 +3,29 @@ package com.utepetshop.controller.web;
 import com.utepetshop.dto.ChatMessageDto;
 import com.utepetshop.dto.ChatRoomDto;
 import com.utepetshop.entity.Branch;
+import com.utepetshop.entity.ChatMessage;
+import com.utepetshop.entity.ChatRoom;
 import com.utepetshop.entity.RoleName;
 import com.utepetshop.entity.ServiceSlot;
 import com.utepetshop.entity.User;
 import com.utepetshop.repository.BranchRepository;
+import com.utepetshop.repository.ChatMessageRepository;
+import com.utepetshop.repository.ChatRoomRepository;
 import com.utepetshop.repository.ServiceRepository;
 import com.utepetshop.repository.ServiceSlotRepository;
 import com.utepetshop.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -33,110 +40,39 @@ public class ChatController {
   private final ServiceRepository serviceRepository;
   private final BranchRepository branchRepository;
   private final ServiceSlotRepository serviceSlotRepository;
-
-  private final Map<String, List<ChatMessageDto>> roomMessages = new ConcurrentHashMap<>();
-  private final Map<String, ChatRoomDto> activeRooms = new ConcurrentHashMap<>();
+  private final ChatRoomRepository chatRoomRepository;
+  private final ChatMessageRepository chatMessageRepository;
 
   @MessageMapping("/chat.send")
+  @Transactional
   public void sendMessage(@Payload ChatMessageDto message, Principal principal) {
-    if (message.getContent() == null || message.getContent().trim().isEmpty()) {
-      return;
+    User sender = requireActiveUser(principal);
+    String content = normalizeContent(message.getContent());
+    boolean supportUser = isSupportUser(sender);
+    ChatRoom room = supportUser ? findRoom(message.getRoomId()) : getOrCreateCustomerRoom(sender);
+
+    ChatMessage saved = saveMessage(room, sender, supportUser ? "STAFF" : "CUSTOMER", content);
+    room.setLastMessage(content);
+    room.setLastMessageAt(saved.getCreatedAt());
+    if (!supportUser) {
+      room.setUnreadCount(room.getUnreadCount() + 1);
     }
+    chatRoomRepository.save(room);
 
-    String roomId = message.getRoomId();
-    if (roomId == null || roomId.trim().isEmpty()) {
-      roomId = "guest_default";
-    }
-    roomId = roomId.trim();
+    messagingTemplate.convertAndSend("/topic/chat/" + room.getRoomId(), toMessageDto(saved));
+    messagingTemplate.convertAndSend("/topic/staff.chat", toRoomDto(room));
 
-    String senderName = message.getSenderName() != null && !message.getSenderName().isBlank()
-        ? message.getSenderName().trim()
-        : "Khách";
-    String senderEmail = "";
-    String senderRole = "CUSTOMER";
-    boolean isStaff = false;
-
-    if (principal != null && principal.getName() != null) {
-      senderEmail = principal.getName();
-      Optional<User> userOpt = userRepository.findByEmail(senderEmail);
-      if (userOpt.isPresent()) {
-        User u = userOpt.get();
-        if (u.getFullName() != null && !u.getFullName().isBlank()) {
-          senderName = u.getFullName();
-        } else {
-          senderName = u.getEmail();
-        }
-        isStaff = u.getRoles().stream().anyMatch(r ->
-            r.getName() == RoleName.STAFF || r.getName() == RoleName.MANAGER || r.getName() == RoleName.ADMIN);
-        senderRole = isStaff ? "STAFF" : "CUSTOMER";
-      }
-    }
-
-    ChatMessageDto enriched = ChatMessageDto.of(roomId, senderName, senderEmail, senderRole, message.getContent().trim());
-
-    List<ChatMessageDto> messages = roomMessages.computeIfAbsent(roomId, k -> new CopyOnWriteArrayList<>());
-    if (messages.size() >= 100) {
-      messages.removeFirst();
-    }
-    messages.add(enriched);
-
-    ChatRoomDto room = activeRooms.get(roomId);
-    if (room == null) {
-      String custName = isStaff ? ("Khách (" + roomId + ")") : senderName;
-      String custEmail = isStaff ? "" : senderEmail;
-      room = ChatRoomDto.builder()
-          .roomId(roomId)
-          .customerName(custName)
-          .customerEmail(custEmail)
-          .unreadCount(isStaff ? 0 : 1)
-          .build();
-    } else {
-      if (!isStaff) {
-        room.setCustomerName(senderName);
-        if (!senderEmail.isBlank()) {
-          room.setCustomerEmail(senderEmail);
-        }
-        room.setUnreadCount(room.getUnreadCount() + 1);
-      }
-    }
-    room.setLastMessage(enriched.getContent());
-    room.setLastTime(enriched.getTime());
-    room.setLastUpdated(System.currentTimeMillis());
-    activeRooms.put(roomId, room);
-
-    messagingTemplate.convertAndSend("/topic/chat/" + roomId, enriched);
-    messagingTemplate.convertAndSend("/topic/staff.chat", room);
-
-    if (!isStaff) {
-      String botReply = getBotReply(message.getContent().trim());
+    if (!supportUser) {
+      String botReply = getBotReply(content);
       if (botReply != null) {
-        ChatMessageDto botMsg = ChatMessageDto.builder()
-            .roomId(roomId)
-            .senderName("Trợ Lý Ảo UTEPet")
-            .senderEmail("bot@utepet.vn")
-            .senderRole("BOT")
-            .content(botReply)
-            .time(LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
-            .staff(false)
-            .bot(true)
-            .build();
-
-        if (messages.size() >= 100) {
-          messages.removeFirst();
-        }
-        messages.add(botMsg);
-        room.setLastMessage("🤖 " + botReply);
-        room.setLastTime(botMsg.getTime());
-        room.setLastUpdated(System.currentTimeMillis());
-
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, botMsg);
-        messagingTemplate.convertAndSend("/topic/staff.chat", room);
+        ChatMessage botMessage = saveMessage(room, null, "BOT", botReply);
+        messagingTemplate.convertAndSend("/topic/chat/" + room.getRoomId(), toMessageDto(botMessage));
       }
     }
   }
 
   private String getBotReply(String text) {
-    String lower = text.toLowerCase();
+    String lower = text.toLowerCase(Locale.ROOT);
     if (lower.contains("bảng giá") || lower.contains("giá spa") || lower.contains("giá") || lower.contains("chi phí") || lower.contains("bao nhiêu tiền") || lower.contains("gói spa")) {
       return buildServicePriceReply();
     }
@@ -198,7 +134,8 @@ public class ChatController {
       }
     }
 
-    List<ServiceSlot> slots = serviceSlotRepository.findNextActiveSlots(LocalDate.now());
+    List<ServiceSlot> slots =
+        serviceSlotRepository.findNextActiveSlots(LocalDate.now());
     if (slots.isEmpty()) {
       reply.append("🕒 Hiện chưa có khung giờ dịch vụ được mở.");
     } else {
@@ -226,30 +163,158 @@ public class ChatController {
 
   @GetMapping("/api/chat/history")
   @ResponseBody
-  public List<ChatMessageDto> getHistory(@RequestParam(value = "roomId", required = false) String roomId) {
-    if (roomId == null || roomId.trim().isEmpty()) {
-      return Collections.emptyList();
+  @Transactional
+  public List<ChatMessageDto> getHistory(
+      @RequestParam(value = "roomId", required = false) String roomId, Principal principal) {
+    ChatRoom room = findAccessibleRoom(roomId, requireActiveUser(principal));
+    return chatMessageRepository.findByRoomRoomIdOrderByCreatedAtAsc(room.getRoomId()).stream()
+        .map(this::toMessageDto)
+        .toList();
+  }
+
+  @GetMapping("/api/chat/my-room")
+  @ResponseBody
+  @Transactional
+  public ChatRoomDto getMyRoom(Principal principal) {
+    User user = requireActiveUser(principal);
+    if (isSupportUser(user)) {
+      throw new AccessDeniedException("Tài khoản hỗ trợ không có phòng chat khách hàng riêng");
     }
-    List<ChatMessageDto> list = roomMessages.get(roomId.trim());
-    return list != null ? list : Collections.emptyList();
+    return toRoomDto(getOrCreateCustomerRoom(user));
   }
 
   @GetMapping("/api/chat/rooms")
   @ResponseBody
-  public List<ChatRoomDto> getRooms() {
-    List<ChatRoomDto> rooms = new ArrayList<>(activeRooms.values());
-    rooms.sort((a, b) -> Long.compare(b.getLastUpdated(), a.getLastUpdated()));
-    return rooms;
+  @Transactional
+  public List<ChatRoomDto> getRooms(Principal principal) {
+    requireSupportRole(requireActiveUser(principal));
+    return chatRoomRepository.findAllByOrderByLastMessageAtDesc().stream()
+        .map(this::toRoomDto)
+        .toList();
   }
 
   @PostMapping("/api/chat/rooms/{roomId}/read")
   @ResponseBody
-  public Map<String, Object> markAsRead(@PathVariable("roomId") String roomId) {
-    ChatRoomDto room = activeRooms.get(roomId);
-    if (room != null) {
-      room.setUnreadCount(0);
-      messagingTemplate.convertAndSend("/topic/staff.chat", room);
-    }
+  @Transactional
+  public Map<String, Object> markAsRead(@PathVariable("roomId") String roomId, Principal principal) {
+    requireSupportRole(requireActiveUser(principal));
+    ChatRoom room = findRoom(roomId);
+    room.setUnreadCount(0);
+    chatRoomRepository.save(room);
+    messagingTemplate.convertAndSend("/topic/staff.chat", toRoomDto(room));
     return Map.of("success", true);
+  }
+
+  private ChatRoom getOrCreateCustomerRoom(User customer) {
+    return chatRoomRepository
+        .findByCustomerId(customer.getId())
+        .orElseGet(
+            () -> {
+              ChatRoom room = new ChatRoom();
+              room.setRoomId(UUID.randomUUID().toString());
+              room.setCustomer(customer);
+              room.setUnreadCount(0);
+              return chatRoomRepository.save(room);
+            });
+  }
+
+  private ChatRoom findAccessibleRoom(String roomId, User user) {
+    ChatRoom room = findRoom(roomId);
+    if (!isSupportUser(user) && !room.getCustomer().getId().equals(user.getId())) {
+      throw new AccessDeniedException("Bạn không có quyền xem phòng chat này");
+    }
+    return room;
+  }
+
+  private ChatRoom findRoom(String roomId) {
+    if (roomId == null || roomId.isBlank()) {
+      throw new AccessDeniedException("Phòng chat không hợp lệ");
+    }
+    return chatRoomRepository
+        .findByRoomId(roomId.trim())
+        .orElseThrow(() -> new AccessDeniedException("Không tìm thấy phòng chat"));
+  }
+
+  private ChatMessage saveMessage(ChatRoom room, User sender, String senderRole, String content) {
+    ChatMessage chatMessage = new ChatMessage();
+    chatMessage.setRoom(room);
+    chatMessage.setSender(sender);
+    chatMessage.setSenderName(sender == null ? "Trợ Lý Ảo UTEPet" : displayName(sender));
+    chatMessage.setSenderEmail(sender == null ? "bot@utepet.vn" : sender.getEmail());
+    chatMessage.setSenderRole(senderRole);
+    chatMessage.setContent(content);
+    chatMessage.setCreatedAt(LocalDateTime.now());
+    return chatMessageRepository.save(chatMessage);
+  }
+
+  private ChatMessageDto toMessageDto(ChatMessage message) {
+    String senderRole = message.getSenderRole();
+    return ChatMessageDto.builder()
+        .roomId(message.getRoom().getRoomId())
+        .senderName(message.getSenderName())
+        .senderEmail(message.getSenderEmail())
+        .senderRole(senderRole)
+        .content(message.getContent())
+        .time(message.getCreatedAt().format(DateTimeFormatter.ofPattern("HH:mm")))
+        .staff("STAFF".equals(senderRole))
+        .bot("BOT".equals(senderRole))
+        .build();
+  }
+
+  private ChatRoomDto toRoomDto(ChatRoom room) {
+    User customer = room.getCustomer();
+    LocalDateTime lastMessageAt = room.getLastMessageAt();
+    return ChatRoomDto.builder()
+        .roomId(room.getRoomId())
+        .customerName(displayName(customer))
+        .customerEmail(customer.getEmail())
+        .lastMessage(room.getLastMessage())
+        .lastTime(lastMessageAt == null ? "" : lastMessageAt.format(DateTimeFormatter.ofPattern("HH:mm")))
+        .lastUpdated(
+            lastMessageAt == null
+                ? 0L
+                : lastMessageAt.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli())
+        .unreadCount(room.getUnreadCount())
+        .build();
+  }
+
+  private User requireActiveUser(Principal principal) {
+    if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+      throw new AccessDeniedException("Cần đăng nhập để sử dụng chat");
+    }
+    return userRepository
+        .findByEmail(principal.getName())
+        .filter(User::isActive)
+        .orElseThrow(() -> new AccessDeniedException("Tài khoản không hợp lệ hoặc đã bị khóa"));
+  }
+
+  private void requireSupportRole(User user) {
+    if (!isSupportUser(user)) {
+      throw new AccessDeniedException("Chỉ nhân viên hỗ trợ mới được sử dụng chức năng này");
+    }
+  }
+
+  private boolean isSupportUser(User user) {
+    return user.getRoles().stream()
+        .anyMatch(
+            role ->
+                role.getName() == RoleName.STAFF
+                    || role.getName() == RoleName.MANAGER
+                    || role.getName() == RoleName.ADMIN);
+  }
+
+  private String normalizeContent(String content) {
+    if (content == null || content.isBlank()) {
+      throw new IllegalArgumentException("Nội dung tin nhắn không được để trống");
+    }
+    String value = content.trim();
+    if (value.length() > 2000) {
+      throw new IllegalArgumentException("Nội dung tin nhắn không được vượt quá 2000 ký tự");
+    }
+    return value;
+  }
+
+  private String displayName(User user) {
+    return user.getFullName() == null || user.getFullName().isBlank() ? user.getEmail() : user.getFullName();
   }
 }

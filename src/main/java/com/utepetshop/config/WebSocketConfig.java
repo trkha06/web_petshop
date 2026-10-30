@@ -17,24 +17,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
-    // Endpoint /ws hỗ trợ SockJS
-    registry.addEndpoint("/ws").setAllowedOriginPatterns("*").withSockJS();
-    registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+    registry.addEndpoint("/ws").withSockJS();
+    registry.addEndpoint("/ws");
   }
 
   @Override
   public void configureMessageBroker(MessageBrokerRegistry registry) {
-    // Enable simple broker /topic và /queue
     registry.enableSimpleBroker("/topic", "/queue");
-    // Application destination prefix /app
     registry.setApplicationDestinationPrefixes("/app");
-    // User destination prefix /user
     registry.setUserDestinationPrefix("/user");
   }
 
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
-    // Đăng ký ChannelInterceptor xác thực JWT & Session
     registration.interceptors(authInterceptor);
   }
 }

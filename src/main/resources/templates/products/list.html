@@ -653,7 +653,7 @@
               </a>
             </div>
 
-            <div class="col-lg-6" sec:authorize="!hasAnyRole('STAFF','MANAGER','ADMIN')">
+            <div class="col-lg-6" sec:authorize="hasRole('CUSTOMER')">
               <div class="card border-0 shadow-sm rounded-4 overflow-hidden h-100" style="border: 1px solid rgba(0,0,0,0.08) !important;">
                 <div class="card-header bg-white border-bottom p-3 d-flex justify-content-between align-items-center">
                   <div class="d-flex align-items-center gap-2">
@@ -684,16 +684,6 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 small" style="font-size: 11px;" onclick="sendFaqQuick('Hướng dẫn cách đặt lịch hẹn Spa')">📅 Hướng dẫn đặt lịch</button>
                     <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 small" style="font-size: 11px;" onclick="sendFaqQuick('Chính sách đổi và hủy lịch hẹn')">📋 Đổi / Hủy lịch</button>
                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1 small fw-semibold" style="font-size: 11px;" onclick="sendFaqQuick('Tôi muốn gặp nhân viên tư vấn trực tiếp')">🩺 Gặp nhân viên</button>
-                  </div>
-
-                  <div sec:authorize="isAnonymous()" class="mb-2">
-                    <div class="input-group input-group-sm">
-                      <span class="input-group-text bg-light border-0 fw-semibold text-muted small">Tên bạn:</span>
-                      <input type="text" id="cust-chat-sender-name" class="form-control form-control-sm border-0 bg-light rounded-end-pill px-2" placeholder="Ví dụ: Bạn Lan, Khách...">
-                    </div>
-                  </div>
-                  <div sec:authorize="isAuthenticated()">
-                    <input type="hidden" id="cust-chat-sender-name" th:value="${#authentication.name}">
                   </div>
 
                   <form id="cust-chat-form" onsubmit="sendCustomerChatMessage(event)" class="d-flex gap-2">
@@ -772,20 +762,10 @@
       let staffRoomSubscription = null;
       let staffRoomsData = [];
 
-      function getOrCreateCustomerRoomId() {
-        const nameInput = document.getElementById('cust-chat-sender-name');
-        if (nameInput && nameInput.type === 'hidden' && nameInput.value) {
-          return nameInput.value.trim();
-        }
-        let stored = localStorage.getItem('utepet_chat_room_id');
-        if (!stored) {
-          stored = 'guest_' + Math.random().toString(36).substring(2, 9);
-          localStorage.setItem('utepet_chat_room_id', stored);
-        }
-        return stored;
-      }
-
       function initChatSystem() {
+        if (!document.getElementById('cust-chat-messages') && !document.getElementById('staff-room-list')) {
+          return;
+        }
         if (typeof SockJS === 'undefined' || typeof Stomp === 'undefined') {
           setTimeout(initChatSystem, 300);
           return;
@@ -821,14 +801,25 @@
       }
 
       function initCustomerChat() {
-        myCustomerRoomId = getOrCreateCustomerRoomId();
         const statusEl = document.getElementById('cust-chat-status');
         if (statusEl) {
-          statusEl.textContent = '🟢 Bot UTEPet & Nhân viên sẵn sàng';
-          statusEl.className = 'text-success small fw-semibold';
+          statusEl.textContent = '🟡 Đang mở phòng tư vấn riêng...';
+          statusEl.className = 'text-warning small fw-semibold';
         }
 
-        fetch('/api/chat/history?roomId=' + encodeURIComponent(myCustomerRoomId))
+        fetch('/api/chat/my-room')
+          .then(res => {
+            if (!res.ok) throw new Error('Không thể mở phòng chat');
+            return res.json();
+          })
+          .then(room => {
+            myCustomerRoomId = room.roomId;
+            if (statusEl) {
+              statusEl.textContent = '🟢 Bot UTEPet & Nhân viên sẵn sàng';
+              statusEl.className = 'text-success small fw-semibold';
+            }
+            return fetch('/api/chat/history?roomId=' + encodeURIComponent(myCustomerRoomId));
+          })
           .then(res => res.ok ? res.json() : [])
           .then(messages => {
             const loading = document.getElementById('cust-chat-loading');
@@ -841,18 +832,20 @@
               appendWelcomeBadge('cust-chat-messages', '🐾 Chào bạn! Bạn đang kết nối riêng 1-1 với UTEPet Care & Spa. Hãy chọn câu hỏi gợi ý ở dưới hoặc gửi tin nhắn để được hỗ trợ tức thì!');
             }
             scrollContainerToBottom('cust-chat-messages');
+            chatStompClient.subscribe('/topic/chat/' + myCustomerRoomId, function (response) {
+              const payload = JSON.parse(response.body);
+              appendMessageToContainer('cust-chat-messages', payload, false);
+              scrollContainerToBottom('cust-chat-messages');
+            });
           })
           .catch(() => {
             const loading = document.getElementById('cust-chat-loading');
             if (loading) loading.remove();
-            appendWelcomeBadge('cust-chat-messages', '🐾 Chào bạn! Hãy gửi câu hỏi tư vấn dịch vụ thú cưng cho chúng tôi.');
+            if (statusEl) {
+              statusEl.textContent = '🔴 Không thể mở phòng tư vấn';
+              statusEl.className = 'text-danger small fw-semibold';
+            }
           });
-
-        chatStompClient.subscribe('/topic/chat/' + myCustomerRoomId, function (response) {
-          const payload = JSON.parse(response.body);
-          appendMessageToContainer('cust-chat-messages', payload, false);
-          scrollContainerToBottom('cust-chat-messages');
-        });
       }
 
       function sendFaqQuick(question) {
@@ -874,15 +867,13 @@
           return;
         }
 
-        const nameInput = document.getElementById('cust-chat-sender-name');
-        let senderName = 'Khách';
-        if (nameInput && nameInput.value.trim()) {
-          senderName = nameInput.value.trim();
+        if (!myCustomerRoomId) {
+          alert('Phòng tư vấn đang được khởi tạo, vui lòng thử lại sau ít giây.');
+          return;
         }
 
         chatStompClient.send('/app/chat.send', {}, JSON.stringify({
           roomId: myCustomerRoomId,
-          senderName: senderName,
           content: text
         }));
 
