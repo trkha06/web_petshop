@@ -107,13 +107,44 @@ public class PromotionService {
   @Transactional
   public void usePromotion(String code) {
     if (code == null || code.isBlank()) return;
-    promotionRepository
-        .findByCode(code.trim().toUpperCase())
-        .ifPresent(
-            p -> {
-              p.setUsedCount(p.getUsedCount() + 1);
-              promotionRepository.save(p);
-            });
+    Promotion promo =
+        promotionRepository
+            .findByCodeForUpdate(code.trim().toUpperCase())
+            .orElseThrow(() -> new BusinessException("Mã khuyến mãi không tồn tại"));
+    if (!promo.isActive() || promo.getUsedCount() >= promo.getUsageLimit()) {
+      throw new BusinessException("Mã khuyến mãi đã hết lượt sử dụng");
+    }
+    promo.setUsedCount(promo.getUsedCount() + 1);
+    promotionRepository.save(promo);
+  }
+
+  @Transactional
+  public PromotionDiscountResponse reservePromotion(String code, BigDecimal orderAmount) {
+    if (code == null || code.isBlank()) {
+      return PromotionDiscountResponse.builder()
+          .valid(false)
+          .message("Mã khuyến mãi không hợp lệ")
+          .build();
+    }
+
+    String normalizedCode = code.trim().toUpperCase();
+    Promotion promo = promotionRepository.findByCodeForUpdate(normalizedCode).orElse(null);
+    if (promo == null || !promo.isActive()) {
+      return PromotionDiscountResponse.builder()
+          .valid(false)
+          .code(normalizedCode)
+          .message("Mã khuyến mãi không tồn tại hoặc đã hết hạn")
+          .build();
+    }
+
+    PromotionDiscountResponse discount = validateAndCalculate(normalizedCode, orderAmount);
+    if (!discount.isValid()) {
+      return discount;
+    }
+
+    promo.setUsedCount(promo.getUsedCount() + 1);
+    promotionRepository.save(promo);
+    return discount;
   }
 
   @Transactional(readOnly = true)

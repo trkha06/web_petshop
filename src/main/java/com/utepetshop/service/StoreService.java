@@ -113,7 +113,7 @@ public class StoreService {
     PromotionDiscountResponse discount = null;
     String promotionCode = normalize(request.promotionCode());
     if (promotionCode != null) {
-      discount = promotions.validateAndCalculate(promotionCode, subtotal);
+      discount = promotions.reservePromotion(promotionCode, subtotal);
       if (!discount.isValid()) throw new IllegalArgumentException(discount.getMessage());
     }
 
@@ -155,7 +155,6 @@ public class StoreService {
     }
 
     CustomerOrder saved = orders.saveAndFlush(order);
-    if (discount != null) promotions.usePromotion(discount.getCode());
     cart.getItems().clear();
     carts.save(cart);
     if (eventPublisher != null) {
