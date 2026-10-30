@@ -5,7 +5,6 @@ import com.utepetshop.repository.*;
 import com.utepetshop.service.OtpService;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,14 +14,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class RegistrationController {
   private final UserRepository users;
   private final RoleRepository roles;
-  private final PasswordEncoder encoder;
   private final OtpService otpService;
 
   public RegistrationController(
-      UserRepository u, RoleRepository r, PasswordEncoder e, OtpService otpService) {
+      UserRepository u, RoleRepository r, OtpService otpService) {
     users = u;
     roles = r;
-    encoder = e;
     this.otpService = otpService;
   }
 
@@ -93,7 +90,7 @@ public class RegistrationController {
     User u = new User();
     u.setFullName(pending.fullName());
     u.setEmail(pending.email());
-    u.setPassword(encoder.encode(pending.password()));
+    u.setPassword(pending.passwordHash());
     u.getRoles().add(roles.findByName(RoleName.CUSTOMER).orElseThrow());
     users.save(u);
 

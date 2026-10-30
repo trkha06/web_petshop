@@ -10,7 +10,6 @@ import java.util.*;
 import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,7 +19,6 @@ public class AuthApiController {
   private final JwtService jwt;
   private final UserRepository users;
   private final RoleRepository roles;
-  private final PasswordEncoder encoder;
   private final OtpService otpService;
 
   public AuthApiController(
@@ -28,14 +26,12 @@ public class AuthApiController {
       JwtService jwt,
       UserRepository users,
       RoleRepository roles,
-      PasswordEncoder encoder,
       OtpService otpService)
       throws Exception {
     this.auth = c.getAuthenticationManager();
     this.jwt = jwt;
     this.users = users;
     this.roles = roles;
-    this.encoder = encoder;
     this.otpService = otpService;
   }
 
@@ -78,7 +74,7 @@ public class AuthApiController {
     User u = new User();
     u.setFullName(pending.fullName());
     u.setEmail(pending.email());
-    u.setPassword(encoder.encode(pending.password()));
+    u.setPassword(pending.passwordHash());
     u.getRoles().add(roles.findByName(RoleName.CUSTOMER).orElseThrow());
     users.save(u);
     return ResponseEntity.status(HttpStatus.CREATED)
