@@ -2,6 +2,15 @@
 
 Ứng dụng cửa hàng thú cưng và dịch vụ chăm sóc: bán sản phẩm, quản lý tồn kho theo chi nhánh, giỏ hàng và đơn hàng, đặt lịch dịch vụ, hồ sơ khách hàng, thông báo và quản lý vận hành.
 
+## Chức năng chính
+
+- Khách hàng: đăng ký và xác thực OTP, đăng nhập, quản lý tài khoản và thú cưng, mua hàng, áp dụng mã giảm giá, theo dõi đơn, đặt lịch dịch vụ và nhận thông báo.
+- Sản phẩm và kho: quản lý danh mục, sản phẩm, hình ảnh và số lượng tồn theo chi nhánh; khách đã nhận hàng có thể đánh giá sản phẩm và cập nhật đánh giá đã gửi.
+- Giao hàng: chọn giao tận nơi hoặc nhận tại cửa hàng; đơn giao tận nơi có khu vực giao hàng, tên đơn vị XPS và mã vận đơn do ứng dụng sinh ra. Đây là chức năng mô phỏng, chưa kết nối API thực tế của đơn vị vận chuyển.
+- Đơn hàng: nhân viên xử lý theo trạng thái; khách xác nhận đã nhận, gửi yêu cầu hoàn đơn kèm lý do; khi nhân viên xác nhận hoàn đơn hợp lệ, số lượng được hoàn về kho của chi nhánh.
+- Dịch vụ: quản lý dịch vụ, khung giờ, lịch hẹn, khuyến mãi, chat và thông báo realtime.
+- Nhân viên và quản lý: phân công STAFF theo chi nhánh, xử lý đơn hàng và lịch hẹn trong phạm vi chi nhánh; MANAGER và ADMIN sử dụng các chức năng quản lý theo quyền được cấp.
+
 ## Công nghệ
 
 - Java 21, Maven, Spring Boot 3.4.3.
@@ -11,7 +20,7 @@
 
 ## 1. Chuẩn bị môi trường
 
-1. Cài **JDK 21**, Maven và MySQL Server 8 nếu muốn lưu dữ liệu bằng MySQL. MySQL Workbench là công cụ quản lý, không thay thế MySQL Server.
+1. Cài **JDK 21**, Maven và MySQL Server 8. MySQL Workbench là công cụ quản lý, không thay thế MySQL Server.
 2. Mở PowerShell và kiểm tra:
 
    ```powershell
@@ -58,6 +67,12 @@ mvn spring-boot:run "-Dspring-boot.run.profiles=mysql"
 
 Không lưu mật khẩu thật vào README hoặc commit lên GitHub.
 
+### Sử dụng file cơ sở dữ liệu `.sql`
+
+File `.sql` là bản xuất cấu trúc và có thể kèm dữ liệu MySQL. Nếu nhóm nộp kèm file này, mở MySQL Workbench, kết nối tới server của máy nhận, tạo hoặc chọn database `utepet_shop`, mở file bằng **File > Open SQL Script**, kiểm tra nội dung rồi chạy script. Tùy cách xuất, script có thể tạo bảng, thêm dữ liệu hoặc thay thế dữ liệu hiện có; hãy sao lưu và kiểm tra trước khi nhập vào database đang sử dụng.
+
+Nếu không nhập bản sao dữ liệu, ứng dụng có thể tự tạo database và cập nhật bảng khi tài khoản MySQL có đủ quyền. Dữ liệu mẫu chỉ được khởi tạo theo điều kiện nêu ở phần tài khoản demo; không thể suy ra dữ liệu máy khác sẽ giống máy đã xuất nếu không nhập bản sao tương ứng. Kiểm tra dữ liệu cá nhân và thông tin tài khoản trước khi chia sẻ file `.sql`.
+
 ## 3. Tài khoản demo và vai trò
 
 Nếu bảng người dùng đang trống, `DataInitializer` tạo dữ liệu mẫu. Các tài khoản ban đầu dùng mật khẩu **`Password@123`**:
@@ -71,7 +86,23 @@ Nếu bảng người dùng đang trống, `DataInitializer` tạo dữ liệu m
 
 Nếu database đã có người dùng, bộ khởi tạo bỏ qua dữ liệu mẫu; không mặc định cho rằng tài khoản hoặc mật khẩu demo sẽ được tạo lại. Đây là tài khoản thử nghiệm, không sử dụng nguyên trạng khi đưa hệ thống ra môi trường thật.
 
-Một số đường dẫn chính: `/login`, `/register`, `/products`, `/services`, `/cart`, `/orders`, `/account/profile`, `/pets`, `/bookings`, `/staff/orders`, `/staff/bookings`, `/manager/dashboard` và `/manager/products`.
+Một số đường dẫn chính: `/login`, `/register`, `/products`, `/services`, `/cart`, `/orders`, `/account/profile`, `/pets`, `/bookings`, `/staff/orders`, `/staff/bookings`, `/manager/dashboard`, `/manager/products` và `/manager/staff`.
+
+### Phân công nhân viên theo chi nhánh
+
+1. Đăng nhập bằng tài khoản MANAGER hoặc ADMIN, mở **Vận hành > Phân công nhân viên** hoặc `/manager/staff`.
+2. Để tạo nhân viên mới, nhập họ tên, email, số điện thoại nếu có, mật khẩu khởi tạo và chọn chi nhánh; sau đó chọn **Tạo nhân viên**.
+3. Để đổi chi nhánh của nhân viên hiện có, chọn chi nhánh ở dòng tương ứng và nhấn **Lưu**.
+4. Đăng nhập bằng tài khoản STAFF để xử lý đơn hàng và lịch hẹn của chi nhánh được gán. Nếu chưa được gán, nhờ MANAGER hoặc ADMIN phân công trước.
+
+Trong dữ liệu mẫu mới, `staff@utepet.vn` được gán chi nhánh UTE Pet Thủ Đức. Tài khoản nhân viên thứ hai cần được tạo thêm; dữ liệu đã có trong MySQL có thể khác dữ liệu mẫu.
+
+### Thử giao hàng, hoàn đơn và đánh giá
+
+1. Đăng nhập CUSTOMER, thêm sản phẩm vào giỏ, nhập thông tin người nhận và chọn giao tận nơi cùng khu vực giao hàng. Kiểm tra đơn và mã vận đơn XPS sau khi đặt.
+2. Đăng nhập STAFF thuộc chi nhánh của đơn, mở **Xử lý đơn hàng** và cập nhật các trạng thái hợp lệ đến khi đơn đang giao.
+3. Đăng nhập lại CUSTOMER, mở chi tiết đơn và chọn **Đã nhận hàng** khi đã nhận đủ sản phẩm. Sau đó có thể đánh giá sản phẩm; gửi lại đánh giá sẽ cập nhật nhận xét hiện có.
+4. Để yêu cầu hoàn đơn, nhập lý do tại chi tiết đơn đã nhận và gửi yêu cầu. STAFF của chi nhánh xử lý yêu cầu; sau khi xác nhận hoàn đơn hợp lệ, đối chiếu số lượng tồn kho.
 
 ## 4. Cấu hình JWT cho API
 
@@ -149,6 +180,8 @@ Trước khi chạy JAR, cấu hình các biến MySQL, JWT, SMTP và Cloudinary
 - **Cổng 8080 đang được sử dụng:** dừng phiên ứng dụng cũ hoặc chạy với cổng khác, ví dụ `mvn spring-boot:run "-Dspring-boot.run.profiles=mysql" "-Dspring-boot.run.arguments=--server.port=8081"`.
 - **Không nhận OTP:** kiểm tra cấu hình SMTP, xác thực tài khoản gửi, mạng và thông báo lỗi trong log ứng dụng.
 - **Không đăng nhập được tài khoản demo:** kiểm tra ứng dụng có kết nối đúng database hay không; bộ khởi tạo chỉ thêm dữ liệu mẫu khi bảng người dùng trống.
+- **Nhân viên không thấy đơn hoặc lịch hẹn:** kiểm tra tài khoản đã được gán đúng chi nhánh trong `/manager/staff` và đơn hoặc lịch thuộc chi nhánh đó.
+- **Chưa thể đánh giá hoặc gửi yêu cầu hoàn đơn:** kiểm tra tài khoản sở hữu đơn và trạng thái đơn; khách cần xác nhận đã nhận hàng trước khi thực hiện các thao tác này.
 - **`BUILD FAILURE`:** tìm dòng lỗi đầu tiên và phần `Caused by` phía trên log, thay vì chỉ xem thông báo Maven ở cuối.
 
 ## Cấu trúc chính
