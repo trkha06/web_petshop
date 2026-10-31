@@ -105,6 +105,7 @@
               <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item rounded-3 py-2" th:href="@{/manager/inventory}"><i class="bi bi-stack me-2 text-success"></i> Quản lý Tồn kho</a></li>
               <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item rounded-3 py-2" th:href="@{/manager/services}"><i class="bi bi-gem me-2 text-success"></i> Quản lý Gói Spa</a></li>
               <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item rounded-3 py-2" th:href="@{/manager/slots}"><i class="bi bi-clock-history me-2 text-success"></i> Quản lý Khung giờ</a></li>
+              <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item rounded-3 py-2" th:href="@{/manager/staff}"><i class="bi bi-people-fill me-2 text-success"></i> Phân công Nhân viên</a></li>
               <li sec:authorize="hasAnyRole('MANAGER','ADMIN')"><a class="dropdown-item rounded-3 py-2" th:href="@{/manager/promotions}"><i class="bi bi-ticket-perforated me-2 text-success"></i> Khuyến mãi & Voucher</a></li>
             </ul>
           </div>

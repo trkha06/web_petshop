@@ -26,6 +26,7 @@ public class WebController {
   private final CurrentUser current;
   private final StoreService store;
   private final ReviewService reviewService;
+  private final StaffProfileService staffProfileService;
 
   public WebController(
       ProductRepository products,
@@ -38,7 +39,8 @@ public class WebController {
       AddressRepository addresses,
       CurrentUser current,
       StoreService store,
-      ReviewService reviewService) {
+      ReviewService reviewService,
+      StaffProfileService staffProfileService) {
     this.products = products;
     this.categories = categories;
     this.brands = brands;
@@ -50,6 +52,7 @@ public class WebController {
     this.current = current;
     this.store = store;
     this.reviewService = reviewService;
+    this.staffProfileService = staffProfileService;
   }
 
   @GetMapping({"/", "/products"})
@@ -354,7 +357,15 @@ public class WebController {
 
   @GetMapping("/staff/orders")
   String staff(Model m) {
-    m.addAttribute("orders", orders.findAllByOrderByCreatedAtDesc());
+    User user = current.required();
+    if (staffProfileService.hasSystemManagementAccess(user)) {
+      m.addAttribute("orders", orders.findAllByOrderByCreatedAtDesc());
+      m.addAttribute("staffBranch", null);
+    } else {
+      Branch branch = staffProfileService.getAssignedBranch(user);
+      m.addAttribute("orders", orders.findByBranchIdOrderByCreatedAtDesc(branch.getId()));
+      m.addAttribute("staffBranch", branch);
+    }
     m.addAttribute("statuses", OrderStatus.values());
     return "staff/orders";
   }
@@ -363,6 +374,9 @@ public class WebController {
   String updateOrder(
       @PathVariable Long id, @RequestParam OrderStatus status, RedirectAttributes ra) {
     try {
+      CustomerOrder order =
+          orders.findById(id).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
+      staffProfileService.requireBranchAccess(current.required(), order.getBranch().getId());
       store.transition(id, status);
       ra.addFlashAttribute("success", "Đã cập nhật trạng thái đơn hàng");
     } catch (IllegalArgumentException e) {

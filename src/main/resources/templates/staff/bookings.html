@@ -11,7 +11,7 @@
           <p class="text-muted mb-0">Xử lý tiến độ chăm sóc thú cưng: Xác nhận → Check-in → Đang thực hiện → Hoàn thành</p>
         </div>
         <div>
-          <form th:action="@{/staff/bookings}" method="get" class="d-flex gap-2">
+          <form th:action="@{/staff/bookings}" method="get" class="d-flex gap-2" th:if="${hasSystemManagementAccess}">
             <select name="branchId" class="form-select" onchange="this.form.submit()">
               <option value="0" th:selected="${selectedBranchId == null or selectedBranchId == 0}">-- Tất cả chi nhánh --</option>
               <option th:each="b : ${branches}" th:value="${b.id}" th:text="${b.name}" th:selected="${selectedBranchId == b.id}"></option>

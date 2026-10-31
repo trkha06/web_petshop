@@ -5,6 +5,9 @@
     <nav th:replace="~{fragments/navbar :: nav}"></nav>
     <main class="container py-5">
       <h1 class="h3 fw-bold mb-4">Xử lý đơn hàng</h1>
+      <div class="alert alert-primary" th:if="${staffBranch != null}">
+        Bạn đang xử lý đơn hàng của chi nhánh <strong th:text="${staffBranch.name}"></strong>.
+      </div>
       <div
         class="alert alert-success"
         th:if="${success}"

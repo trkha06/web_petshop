@@ -7,12 +7,19 @@ import com.utepetshop.dto.ServiceRequest;
 import com.utepetshop.dto.SlotGenerateRequest;
 import com.utepetshop.entity.DiscountType;
 import com.utepetshop.entity.PetType;
+import com.utepetshop.entity.RoleName;
+import com.utepetshop.entity.User;
 import com.utepetshop.repository.BranchRepository;
+import com.utepetshop.repository.StaffProfileRepository;
+import com.utepetshop.repository.UserRepository;
 import com.utepetshop.service.AnalyticsDashboardService;
 import com.utepetshop.service.PetCareServiceCatalog;
 import com.utepetshop.service.PromotionService;
 import com.utepetshop.service.SlotManagementService;
+import com.utepetshop.service.StaffProfileService;
 import java.time.LocalDate;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,6 +35,9 @@ public class ManagerOperationsWebController {
   private final SlotManagementService slotService;
   private final BranchRepository branchRepository;
   private final PromotionService promotionService;
+  private final UserRepository userRepository;
+  private final StaffProfileRepository staffProfileRepository;
+  private final StaffProfileService staffProfileService;
 
   @GetMapping("/dashboard")
   public String dashboard(Model model) {
@@ -122,5 +132,50 @@ public class ManagerOperationsWebController {
       ra.addFlashAttribute("error", e.getMessage());
     }
     return "redirect:/manager/promotions";
+  }
+
+  @GetMapping("/staff")
+  public String staffPage(Model model) {
+    Map<Long, Long> assignedBranchIds =
+        staffProfileRepository.findAllByOrderByUserFullNameAsc().stream()
+            .collect(Collectors.toMap(profile -> profile.getUser().getId(), profile -> profile.getBranch().getId()));
+    java.util.List<User> staffUsers =
+        userRepository.findAll().stream()
+            .filter(user -> user.getRoles().stream().anyMatch(role -> role.getName() == RoleName.STAFF))
+            .sorted(java.util.Comparator.comparing(User::getFullName, String.CASE_INSENSITIVE_ORDER))
+            .toList();
+    model.addAttribute("staffUsers", staffUsers);
+    model.addAttribute("branches", branchRepository.findAll());
+    model.addAttribute("assignedBranchIds", assignedBranchIds);
+    return "manager/staff/list";
+  }
+
+  @PostMapping("/staff/{userId}/branch")
+  public String assignStaffBranch(
+      @PathVariable Long userId, @RequestParam Long branchId, RedirectAttributes ra) {
+    try {
+      staffProfileService.assignStaffToBranch(userId, branchId);
+      ra.addFlashAttribute("success", "Đã gán nhân viên vào chi nhánh");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", e.getMessage());
+    }
+    return "redirect:/manager/staff";
+  }
+
+  @PostMapping("/staff")
+  public String createStaff(
+      @RequestParam String fullName,
+      @RequestParam String email,
+      @RequestParam(required = false) String phone,
+      @RequestParam String password,
+      @RequestParam Long branchId,
+      RedirectAttributes ra) {
+    try {
+      staffProfileService.createStaff(fullName, email, phone, password, branchId);
+      ra.addFlashAttribute("success", "Đã tạo tài khoản nhân viên và gán chi nhánh");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", e.getMessage());
+    }
+    return "redirect:/manager/staff";
   }
 }

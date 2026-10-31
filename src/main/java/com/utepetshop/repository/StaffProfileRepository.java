@@ -15,4 +15,7 @@ public interface StaffProfileRepository extends JpaRepository<StaffProfile, Long
 
   @EntityGraph(attributePaths = {"user", "branch"})
   List<StaffProfile> findByBranchId(Long branchId);
+
+  @EntityGraph(attributePaths = {"user", "branch"})
+  List<StaffProfile> findAllByOrderByUserFullNameAsc();
 }
