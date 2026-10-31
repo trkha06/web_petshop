@@ -40,6 +40,10 @@ public class ReviewService {
               .findById(req.getProductId())
               .orElseThrow(() -> new BusinessException("Không tìm thấy sản phẩm"));
 
+      if (reviewRepository.existsByUserIdAndProductId(user.getId(), product.getId())) {
+        throw new BusinessException("Bạn đã đánh giá sản phẩm này rồi");
+      }
+
       List<CustomerOrder> completedOrders =
           orderRepository.findByCustomerIdOrderByCreatedAtDesc(user.getId()).stream()
               .filter(o -> o.getStatus() == OrderStatus.COMPLETED)
@@ -64,6 +68,10 @@ public class ReviewService {
           serviceRepository
               .findById(req.getServiceId())
               .orElseThrow(() -> new BusinessException("Không tìm thấy dịch vụ"));
+
+      if (reviewRepository.existsByUserIdAndServiceId(user.getId(), service.getId())) {
+        throw new BusinessException("Bạn đã đánh giá dịch vụ này rồi");
+      }
 
       boolean hasCompletedBooking =
           bookingRepository.existsByUserIdAndServiceIdAndStatus(

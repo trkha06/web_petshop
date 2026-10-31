@@ -1,6 +1,7 @@
 package com.utepetshop.controller.web;
 
 import com.utepetshop.dto.CheckoutRequest;
+import com.utepetshop.dto.ReviewResponse;
 import com.utepetshop.entity.*;
 import com.utepetshop.repository.*;
 import com.utepetshop.service.*;
@@ -24,6 +25,7 @@ public class WebController {
   private final AddressRepository addresses;
   private final CurrentUser current;
   private final StoreService store;
+  private final ReviewService reviewService;
 
   public WebController(
       ProductRepository products,
@@ -35,7 +37,8 @@ public class WebController {
       OrderRepository orders,
       AddressRepository addresses,
       CurrentUser current,
-      StoreService store) {
+      StoreService store,
+      ReviewService reviewService) {
     this.products = products;
     this.categories = categories;
     this.brands = brands;
@@ -46,6 +49,7 @@ public class WebController {
     this.addresses = addresses;
     this.current = current;
     this.store = store;
+    this.reviewService = reviewService;
   }
 
   @GetMapping({"/", "/products"})
@@ -99,6 +103,10 @@ public class WebController {
             .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sản phẩm"));
     m.addAttribute("product", p);
     m.addAttribute("stocks", inventories.findByProductId(id));
+    List<ReviewResponse> reviews = reviewService.getProductReviews(id);
+    m.addAttribute("reviews", reviews);
+    m.addAttribute(
+        "averageRating", reviews.stream().mapToInt(ReviewResponse::getRating).average().orElse(0));
     return "products/detail";
   }
 
