@@ -59,6 +59,27 @@
               </select>
             </div>
 
+            <div class="mb-3" id="shippingZoneGroup">
+              <label class="form-label small fw-semibold d-block">Khu vực giao hàng XPS</label>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <input class="btn-check" type="radio" name="shippingZone" id="innerCity" value="INNER_CITY" checked />
+                  <label class="btn btn-outline-primary w-100 text-start p-3" for="innerCity">
+                    <strong class="d-block"><i class="bi bi-buildings me-1"></i> Nội thành TP.HCM</strong>
+                    <small class="text-muted">Giao nhanh trong thành phố</small>
+                  </label>
+                </div>
+                <div class="col-md-6">
+                  <input class="btn-check" type="radio" name="shippingZone" id="outerCity" value="OUTER_CITY" />
+                  <label class="btn btn-outline-primary w-100 text-start p-3" for="outerCity">
+                    <strong class="d-block"><i class="bi bi-geo-alt me-1"></i> Ngoại thành / tỉnh khác</strong>
+                    <small class="text-muted">Giao liên tỉnh hoặc khu vực xa</small>
+                  </label>
+                </div>
+              </div>
+              <div class="form-text small text-muted">Đơn giao tận nơi được tạo mã vận đơn XPS để theo dõi.</div>
+            </div>
+
             <div class="mb-2">
               <label class="form-label small fw-semibold" for="paymentMethod">Phương thức thanh toán</label>
               <select class="form-select" id="paymentMethod" name="paymentMethod" required>
@@ -127,6 +148,8 @@
       const deliveryType = document.getElementById('deliveryType');
       const shippingAddress = document.getElementById('shippingAddress');
       const addressHelp = document.getElementById('addressHelp');
+      const shippingZoneGroup = document.getElementById('shippingZoneGroup');
+      const shippingZoneInputs = document.querySelectorAll('input[name="shippingZone"]');
       const applyPromotion = document.getElementById('applyPromotion');
       const promotionCode = document.getElementById('promotionCode');
       const promotionMessage = document.getElementById('promotionMessage');
@@ -143,6 +166,10 @@
       function updateAddressRequirement() {
         const needsAddress = deliveryType.value === 'DELIVERY';
         shippingAddress.required = needsAddress;
+        shippingZoneGroup.hidden = !needsAddress;
+        shippingZoneInputs.forEach(function (input) {
+          input.disabled = !needsAddress;
+        });
         addressHelp.textContent = needsAddress
           ? 'Nhập đầy đủ số nhà, đường, phường/xã, quận/huyện và tỉnh/thành phố.'
           : 'Bạn sẽ nhận hàng tại chi nhánh đang xử lý giỏ hàng.';

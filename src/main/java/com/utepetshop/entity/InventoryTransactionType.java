@@ -4,5 +4,6 @@ public enum InventoryTransactionType {
   IMPORT,
   SALE,
   ADJUSTMENT,
-  CANCEL_ORDER
+  CANCEL_ORDER,
+  RETURN_ORDER
 }

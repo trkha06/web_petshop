@@ -124,6 +124,9 @@ public class StoreService {
     order.setCheckoutRequestKey(checkoutRequestKey);
     order.setPaymentMethod(request.paymentMethod());
     order.setDeliveryType(request.deliveryType());
+    order.setShippingZone(resolveShippingZone(request));
+    order.setShippingCarrier(request.deliveryType() == DeliveryType.DELIVERY ? "XPS" : null);
+    order.setTrackingCode(request.deliveryType() == DeliveryType.DELIVERY ? createTrackingCode() : null);
     order.setRecipientName(request.recipientName().trim());
     order.setRecipientEmail(request.recipientEmail().trim().toLowerCase());
     order.setRecipientPhone(request.recipientPhone().trim());
@@ -209,6 +212,9 @@ public class StoreService {
         && normalize(request.shippingAddress()) == null)
       throw new IllegalArgumentException("Vui lòng nhập địa chỉ giao hàng");
 
+    if (request.deliveryType() == DeliveryType.PICKUP_AT_STORE && request.shippingZone() != null)
+      throw new IllegalArgumentException("Nhận tại cửa hàng không cần chọn khu vực giao hàng");
+
     if (request.shippingAddress() != null && request.shippingAddress().trim().length() > 500)
       throw new IllegalArgumentException("Địa chỉ giao hàng quá dài");
 
@@ -220,6 +226,24 @@ public class StoreService {
     String address = normalize(request.shippingAddress());
     if (request.deliveryType() == DeliveryType.DELIVERY) return address;
     return "Nhận tại " + branch.getName() + " - " + branch.getAddress();
+  }
+
+  private ShippingZone resolveShippingZone(CheckoutRequest request) {
+    if (request.deliveryType() != DeliveryType.DELIVERY) return null;
+    if (request.shippingZone() != null) return request.shippingZone();
+    String address = normalize(request.shippingAddress());
+    if (address == null) return ShippingZone.OUTER_CITY;
+    String normalizedAddress = address.toLowerCase(Locale.ROOT);
+    return normalizedAddress.contains("hồ chí minh")
+            || normalizedAddress.contains("ho chi minh")
+            || normalizedAddress.contains("tp.hcm")
+            || normalizedAddress.contains("tphcm")
+        ? ShippingZone.INNER_CITY
+        : ShippingZone.OUTER_CITY;
+  }
+
+  private String createTrackingCode() {
+    return "XPS" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase(Locale.ROOT);
   }
 
   private String normalize(String value) {
@@ -273,7 +297,57 @@ public class StoreService {
     }
   }
 
+  @Transactional
+  public void confirmReceived(User user, Long orderId) {
+    CustomerOrder order =
+        orders
+            .findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
+    if (!order.getCustomer().getId().equals(user.getId()))
+      throw new IllegalArgumentException("Bạn không có quyền xác nhận đơn hàng này");
+    if (order.getStatus() != OrderStatus.SHIPPING)
+      throw new IllegalArgumentException("Chỉ xác nhận khi đơn đang giao hàng");
+    order.setStatus(OrderStatus.COMPLETED);
+    CustomerOrder updated = orders.save(order);
+    if (eventPublisher != null) {
+      eventPublisher.publishEvent(
+          new com.utepetshop.service.event.OrderStatusChangedEvent(
+              this, updated, "Khách hàng đã xác nhận nhận đơn #" + updated.getId()));
+    }
+  }
+
+  @Transactional
+  public void requestReturn(User user, Long orderId, String reason) {
+    CustomerOrder order =
+        orders
+            .findById(orderId)
+            .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy đơn hàng"));
+    if (!order.getCustomer().getId().equals(user.getId()))
+      throw new IllegalArgumentException("Bạn không có quyền yêu cầu hoàn đơn này");
+    if (order.getStatus() != OrderStatus.COMPLETED)
+      throw new IllegalArgumentException("Chỉ có thể yêu cầu hoàn đơn sau khi đã nhận hàng");
+    String returnReason = normalize(reason);
+    if (returnReason == null || returnReason.length() < 10)
+      throw new IllegalArgumentException("Vui lòng nhập lý do hoàn đơn ít nhất 10 ký tự");
+    if (returnReason.length() > 500)
+      throw new IllegalArgumentException("Lý do hoàn đơn không được quá 500 ký tự");
+    order.setReturnReason(returnReason);
+    order.setReturnRequestedAt(java.time.LocalDateTime.now());
+    order.setStatus(OrderStatus.RETURN_REQUESTED);
+    CustomerOrder updated = orders.save(order);
+    if (eventPublisher != null) {
+      eventPublisher.publishEvent(
+          new com.utepetshop.service.event.OrderStatusChangedEvent(
+              this, updated, "Khách hàng yêu cầu hoàn đơn #" + updated.getId()));
+    }
+  }
+
   private void restockAndCancel(CustomerOrder order) {
+    restockOrder(order, InventoryTransactionType.CANCEL_ORDER, "Hủy order #" + order.getId());
+    order.setStatus(OrderStatus.CANCELLED);
+  }
+
+  private void restockOrder(CustomerOrder order, InventoryTransactionType type, String note) {
     for (OrderItem item : order.getItems()) {
       Inventory inv =
           inventories
@@ -283,11 +357,10 @@ public class StoreService {
       transactions.save(
           new InventoryTransaction(
               inv,
-              InventoryTransactionType.CANCEL_ORDER,
+              type,
               item.getQuantity(),
-              "Hủy order #" + order.getId()));
+              note));
     }
-    order.setStatus(OrderStatus.CANCELLED);
   }
 
   @Transactional
@@ -305,11 +378,16 @@ public class StoreService {
             OrderStatus.PACKING,
             Set.of(OrderStatus.SHIPPING),
             OrderStatus.SHIPPING,
-            Set.of(OrderStatus.COMPLETED));
+            Set.of(),
+            OrderStatus.RETURN_REQUESTED,
+            Set.of(OrderStatus.RETURNED));
     if (!allowed.getOrDefault(order.getStatus(), Set.of()).contains(next))
       throw new IllegalArgumentException("Không thể chuyển trạng thái đơn hàng theo cách này");
     if (next == OrderStatus.CANCELLED) {
       restockAndCancel(order);
+    } else if (next == OrderStatus.RETURNED) {
+      restockOrder(order, InventoryTransactionType.RETURN_ORDER, "Hoàn order #" + order.getId());
+      order.setStatus(OrderStatus.RETURNED);
     } else {
       order.setStatus(next);
     }

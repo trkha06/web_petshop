@@ -221,6 +221,7 @@ public class WebController {
       @RequestParam String recipientEmail,
       @RequestParam String recipientPhone,
       @RequestParam(required = false) String shippingAddress,
+      @RequestParam(required = false) ShippingZone shippingZone,
       @RequestParam(required = false) String customerNote,
       @RequestParam(required = false) String promotionCode,
       @RequestParam String idempotencyKey,
@@ -233,6 +234,7 @@ public class WebController {
             recipientEmail,
             recipientPhone,
             shippingAddress,
+            shippingZone,
             customerNote,
             promotionCode);
     try {
@@ -316,6 +318,29 @@ public class WebController {
     try {
       store.cancelByCustomer(current.required(), id);
       ra.addFlashAttribute("success", "Đã hủy đơn và hoàn lại tồn kho");
+    } catch (IllegalArgumentException e) {
+      ra.addFlashAttribute("error", e.getMessage());
+    }
+    return "redirect:/orders/" + id;
+  }
+
+  @PostMapping("/orders/{id}/confirm-received")
+  String confirmReceived(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      store.confirmReceived(current.required(), id);
+      ra.addFlashAttribute("success", "Đã xác nhận nhận hàng. Bạn có thể đánh giá từng sản phẩm trong đơn.");
+    } catch (IllegalArgumentException e) {
+      ra.addFlashAttribute("error", e.getMessage());
+    }
+    return "redirect:/orders/" + id;
+  }
+
+  @PostMapping("/orders/{id}/return")
+  String requestReturn(
+      @PathVariable Long id, @RequestParam String returnReason, RedirectAttributes ra) {
+    try {
+      store.requestReturn(current.required(), id, returnReason);
+      ra.addFlashAttribute("success", "Đã gửi yêu cầu hoàn đơn. UTEPet sẽ liên hệ để xử lý.");
     } catch (IllegalArgumentException e) {
       ra.addFlashAttribute("error", e.getMessage());
     }

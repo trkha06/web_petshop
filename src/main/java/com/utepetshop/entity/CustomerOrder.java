@@ -31,6 +31,15 @@ public class CustomerOrder {
   @Enumerated(EnumType.STRING)
   private DeliveryType deliveryType = DeliveryType.DELIVERY;
 
+  @Enumerated(EnumType.STRING)
+  private ShippingZone shippingZone;
+
+  @Column(length = 50)
+  private String shippingCarrier;
+
+  @Column(unique = true, length = 40)
+  private String trackingCode;
+
   @Column(name = "checkout_request_key", unique = true, length = 80, updatable = false)
   private String checkoutRequestKey;
 
@@ -48,6 +57,11 @@ public class CustomerOrder {
 
   @Column(length = 500)
   private String customerNote;
+
+  @Column(length = 500)
+  private String returnReason;
+
+  private LocalDateTime returnRequestedAt;
 
   @Column(length = 50)
   private String promotionCode;

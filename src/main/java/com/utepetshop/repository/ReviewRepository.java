@@ -3,6 +3,7 @@ package com.utepetshop.repository;
 
 import com.utepetshop.entity.Review;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,7 +19,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
   @EntityGraph(attributePaths = {"user", "product", "service"})
   List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-  boolean existsByUserIdAndProductId(Long userId, Long productId);
+  Optional<Review> findByUserIdAndProductId(Long userId, Long productId);
 
-  boolean existsByUserIdAndServiceId(Long userId, Long serviceId);
+  Optional<Review> findByUserIdAndServiceId(Long userId, Long serviceId);
 }

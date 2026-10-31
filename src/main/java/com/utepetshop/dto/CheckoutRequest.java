@@ -13,5 +13,6 @@ public record CheckoutRequest(
     @NotBlank @Email @Size(max = 150) String recipientEmail,
     @NotBlank @Size(max = 20) String recipientPhone,
     @Size(max = 500) String shippingAddress,
+    ShippingZone shippingZone,
     @Size(max = 500) String customerNote,
     @Size(max = 50) String promotionCode) {}

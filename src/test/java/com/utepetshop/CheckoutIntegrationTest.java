@@ -56,6 +56,7 @@ class CheckoutIntegrationTest {
             "an@example.com",
             "0901234567",
             "01 Võ Văn Ngân, Thủ Đức, TP.HCM",
+            ShippingZone.INNER_CITY,
             "Giao giờ hành chính",
             "CHAOMUNG");
 

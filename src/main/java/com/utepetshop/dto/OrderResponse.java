@@ -5,6 +5,7 @@ import com.utepetshop.entity.DeliveryType;
 import com.utepetshop.entity.OrderItem;
 import com.utepetshop.entity.OrderStatus;
 import com.utepetshop.entity.PaymentMethod;
+import com.utepetshop.entity.ShippingZone;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,11 +18,16 @@ public record OrderResponse(
     OrderStatus status,
     PaymentMethod paymentMethod,
     DeliveryType deliveryType,
+    ShippingZone shippingZone,
+    String shippingCarrier,
+    String trackingCode,
     String recipientName,
     String recipientEmail,
     String recipientPhone,
     String shippingAddress,
     String customerNote,
+    String returnReason,
+    LocalDateTime returnRequestedAt,
     String promotionCode,
     BigDecimal subtotalAmount,
     BigDecimal discountAmount,
@@ -37,11 +43,16 @@ public record OrderResponse(
         order.getStatus(),
         order.getPaymentMethod(),
         order.getDeliveryType(),
+        order.getShippingZone(),
+        order.getShippingCarrier(),
+        order.getTrackingCode(),
         order.getRecipientName(),
         order.getRecipientEmail(),
         order.getRecipientPhone(),
         order.getShippingAddress(),
         order.getCustomerNote(),
+        order.getReturnReason(),
+        order.getReturnRequestedAt(),
         order.getPromotionCode(),
         order.getSubtotalAmount(),
         order.getDiscountAmount(),

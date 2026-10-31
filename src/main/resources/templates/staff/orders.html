@@ -17,6 +17,7 @@
             <tr>
               <th>Mã đơn</th>
               <th>Người nhận</th>
+              <th>Vận chuyển</th>
               <th>Địa chỉ</th>
               <th>Chi nhánh</th>
               <th>Tổng tiền</th>
@@ -32,6 +33,14 @@
                 <div class="small text-muted" th:text="${o.recipientPhone != null ? o.recipientPhone : 'Chưa có SĐT'}"></div>
                 <div class="small text-muted" th:text="${o.recipientEmail != null ? o.recipientEmail : o.customer.email}"></div>
               </td>
+              <td class="small" style="min-width: 150px">
+                <div th:if="${o.trackingCode != null}">
+                  <strong class="text-primary d-block" th:text="${o.shippingCarrier}"></strong>
+                  <span class="font-monospace" th:text="${o.trackingCode}"></span>
+                  <div class="text-muted" th:text="${o.shippingZone == T(com.utepetshop.entity.ShippingZone).INNER_CITY ? 'Nội thành TP.HCM' : 'Ngoại thành / tỉnh khác'}"></div>
+                </div>
+                <span class="text-muted" th:if="${o.trackingCode == null}">Nhận tại cửa hàng</span>
+              </td>
               <td class="small" style="min-width: 220px" th:text="${o.shippingAddress != null ? o.shippingAddress : 'Chưa có địa chỉ'}"></td>
               <td th:text="${o.branch.name}"></td>
               <td
@@ -42,6 +51,7 @@
                   class="badge text-bg-secondary"
                   th:text="${o.status}"
                 ></span>
+                <div class="small text-danger mt-1" th:if="${o.returnReason != null}" th:text="${o.returnReason}"></div>
               </td>
               <td>
                 <form

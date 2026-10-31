@@ -43,4 +43,17 @@ public class OrderApiController {
     store.cancelByCustomer(current.required(), id);
     return ResponseEntity.ok(Map.of("message", "Đã hủy đơn và hoàn tồn kho"));
   }
+
+  @PostMapping("/{id}/confirm-received")
+  ResponseEntity<?> confirmReceived(@PathVariable Long id) {
+    store.confirmReceived(current.required(), id);
+    return ResponseEntity.ok(Map.of("message", "Đã xác nhận nhận hàng"));
+  }
+
+  @PostMapping("/{id}/return")
+  ResponseEntity<?> requestReturn(
+      @PathVariable Long id, @RequestBody Map<String, String> body) {
+    store.requestReturn(current.required(), id, body.get("returnReason"));
+    return ResponseEntity.ok(Map.of("message", "Đã gửi yêu cầu hoàn đơn"));
+  }
 }

@@ -18,6 +18,7 @@
               <tr>
                 <th scope="col" class="py-3">Mã đơn</th>
                 <th scope="col" class="py-3">Chi nhánh xử lý</th>
+                <th scope="col" class="py-3">Vận đơn</th>
                 <th scope="col" class="py-3">Trạng thái</th>
                 <th scope="col" class="py-3">Tổng tiền</th>
                 <th scope="col" class="py-3 text-end">Thao tác</th>
@@ -29,6 +30,10 @@
                   <strong class="font-monospace text-primary" th:text="|#${o.id}|"></strong>
                 </td>
                 <td class="text-secondary" th:text="${o.branch.name}"></td>
+                <td>
+                  <strong class="font-monospace text-primary small" th:if="${o.trackingCode != null}" th:text="${o.trackingCode}"></strong>
+                  <span class="small text-muted" th:if="${o.trackingCode == null}">Nhận tại cửa hàng</span>
+                </td>
                 <td>
                   <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 py-2 fw-semibold" th:text="${o.status}"></span>
                 </td>

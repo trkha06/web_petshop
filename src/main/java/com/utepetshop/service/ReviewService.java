@@ -23,15 +23,12 @@ public class ReviewService {
 
   @Transactional
   public ReviewResponse createReview(ReviewRequest req, User user) {
-    if (req.getProductId() == null && req.getServiceId() == null) {
+    if ((req.getProductId() == null && req.getServiceId() == null)
+        || (req.getProductId() != null && req.getServiceId() != null)) {
       throw new BusinessException("Đánh giá phải gắn với sản phẩm hoặc dịch vụ!");
     }
 
-    Review review = new Review();
-    review.setUser(user);
-    review.setRating(Math.max(1, Math.min(5, req.getRating())));
-    review.setComment(req.getComment());
-    review.setCreatedAt(LocalDateTime.now());
+    Review review;
 
     // 1. Nếu đánh giá Sản phẩm: Kiểm tra xem user có Order COMPLETED chứa sản phẩm này không
     if (req.getProductId() != null) {
@@ -39,10 +36,6 @@ public class ReviewService {
           productRepository
               .findById(req.getProductId())
               .orElseThrow(() -> new BusinessException("Không tìm thấy sản phẩm"));
-
-      if (reviewRepository.existsByUserIdAndProductId(user.getId(), product.getId())) {
-        throw new BusinessException("Bạn đã đánh giá sản phẩm này rồi");
-      }
 
       List<CustomerOrder> completedOrders =
           orderRepository.findByCustomerIdOrderByCreatedAtDesc(user.getId()).stream()
@@ -58,20 +51,17 @@ public class ReviewService {
             "Bạn chỉ có thể đánh giá sản phẩm sau khi đã mua và nhận hàng thành công!");
       }
 
+      review =
+          reviewRepository
+              .findByUserIdAndProductId(user.getId(), product.getId())
+              .orElseGet(Review::new);
       review.setProduct(product);
       review.setOrder(completedOrders.get(0));
-    }
-
-    // 2. Nếu đánh giá Dịch vụ: Kiểm tra xem user có Booking COMPLETED cho dịch vụ này không
-    if (req.getServiceId() != null) {
+    } else {
       com.utepetshop.entity.Service service =
           serviceRepository
               .findById(req.getServiceId())
               .orElseThrow(() -> new BusinessException("Không tìm thấy dịch vụ"));
-
-      if (reviewRepository.existsByUserIdAndServiceId(user.getId(), service.getId())) {
-        throw new BusinessException("Bạn đã đánh giá dịch vụ này rồi");
-      }
 
       boolean hasCompletedBooking =
           bookingRepository.existsByUserIdAndServiceIdAndStatus(
@@ -82,8 +72,17 @@ public class ReviewService {
             "Bạn chỉ có thể đánh giá dịch vụ sau khi đã trải nghiệm và hoàn thành lịch hẹn!");
       }
 
+      review =
+          reviewRepository
+              .findByUserIdAndServiceId(user.getId(), service.getId())
+              .orElseGet(Review::new);
       review.setService(service);
     }
+
+    review.setUser(user);
+    review.setRating(Math.max(1, Math.min(5, req.getRating())));
+    review.setComment(req.getComment());
+    review.setCreatedAt(LocalDateTime.now());
 
     Review saved = reviewRepository.save(review);
     return ReviewResponse.fromEntity(saved);
